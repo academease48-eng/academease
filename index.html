@@ -559,7 +559,7 @@ html,body{height:100%;font-family:var(--font-body);-webkit-font-smoothing:antial
 <script>
 /* ════════ CONFIG ════════ */
 // 🔧 Replace with your actual Apps Script deployment URL
-var APPS_SCRIPT_URL = 'AKfycbw5aG84Eiq7VmUwACVwbhhT_SIsUY9T15n1HzCqnK8vegCOecgZNr8IhRfUjNQ42PosuQ';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5aG84Eiq7VmUwACVwbhhT_SIsUY9T15n1HzCqnK8vegCOecgZNr8IhRfUjNQ42PosuQ/exec';
 
 /* ════════ TOAST ════════ */
 var _toastTimer;
@@ -709,11 +709,7 @@ function doTeacherLogin() {
   document.getElementById('loginErr').style.display = 'none';
   setBtnLoading('tBtn', true);
 
-  fetch(APPS_SCRIPT_URL + '?action=login&role=teacher', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'username=' + encodeURIComponent(u) + '&password=' + encodeURIComponent(p)
-  })
+  fetch(APPS_SCRIPT_URL + '?action=login&role=teacher&username=' + encodeURIComponent(u) + '&password=' + encodeURIComponent(p))
   .then(function(r) { return r.json(); })
   .then(function(res) {
     if (!res || res.error) {
@@ -744,11 +740,7 @@ function doAdminLogin() {
   document.getElementById('loginErr').style.display = 'none';
   setBtnLoading('aBtn', true);
 
-  fetch(APPS_SCRIPT_URL + '?action=login&role=admin', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'username=' + encodeURIComponent(e) + '&password=' + encodeURIComponent(p)
-  })
+  fetch(APPS_SCRIPT_URL + '?action=login&role=admin&username=' + encodeURIComponent(e) + '&password=' + encodeURIComponent(p))
   .then(function(r) { return r.json(); })
   .then(function(res) {
     if (!res || res.error) {
