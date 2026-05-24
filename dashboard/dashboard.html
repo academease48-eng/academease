@@ -1461,18 +1461,11 @@ function _gasGet(action, params) {
   });
 }
 function _gasPost(action, data) {
-  return new Promise(function(resolve, reject) {
-    var cb = '_gasCb' + (++_cbCount);
-    var url = APPS_SCRIPT_URL + '?callback=' + cb + '&action=' + encodeURIComponent(action)
-            + '&data=' + encodeURIComponent(JSON.stringify(data));
-    var script = document.createElement('script');
-    var timer = setTimeout(function(){ cleanup(); reject(new Error('Timeout')); }, 30000);
-    function cleanup(){ delete window[cb]; document.head.removeChild(script); clearTimeout(timer); }
-    window[cb] = function(data){ cleanup(); resolve(data); };
-    script.onerror = function(){ cleanup(); reject(new Error('Network error')); };
-    script.src = url;
-    document.head.appendChild(script);
-  });
+  return fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: action, data: data })
+  }).then(function(r) { return r.json(); });
 }
 /* page navigation */
 var APPS_SCRIPT_PAGE_URL = 'https://mute-smoke-c8ea.academease48.workers.dev';
