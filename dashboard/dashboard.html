@@ -1441,25 +1441,38 @@
      SCRIPT
 ══════════════════════════════ -->
 <script>
-/* ══ GitHub Pages: GAS fetch helper ══ */
+/* ══ GitHub Pages: JSONP helper (bypasses CORS) ══ */
 var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5aG84Eiq7VmUwACVwbhhT_SIsUY9T15n1HzCqnK8vegCOecgZNr8IhRfUjNQ42PosuQ/exec';
+var _cbCount = 0;
 function _gasGet(action, params) {
-  var url = APPS_SCRIPT_URL + '?action=' + encodeURIComponent(action);
-  if (params) Object.keys(params).forEach(function(k){
-    url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]||'');
+  return new Promise(function(resolve, reject) {
+    var cb = '_gasCb' + (++_cbCount);
+    var url = APPS_SCRIPT_URL + '?callback=' + cb + '&action=' + encodeURIComponent(action);
+    if (params) Object.keys(params).forEach(function(k){
+      url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(String(params[k]||''));
+    });
+    var script = document.createElement('script');
+    var timer = setTimeout(function(){ cleanup(); reject(new Error('Timeout')); }, 30000);
+    function cleanup(){ delete window[cb]; document.head.removeChild(script); clearTimeout(timer); }
+    window[cb] = function(data){ cleanup(); resolve(data); };
+    script.onerror = function(){ cleanup(); reject(new Error('Network error')); };
+    script.src = url;
+    document.head.appendChild(script);
   });
-  return fetch(url, {mode:'cors'}).then(function(r){return r.json();});
 }
 function _gasPost(action, data) {
-  var url = APPS_SCRIPT_URL + '?action=' + encodeURIComponent(action) +
-            '&data=' + encodeURIComponent(JSON.stringify(data));
-  return fetch(url, {mode:'cors'}).then(function(r){return r.json();});
-}
-function _gasSH(successFn, failFn) {
-  return function(promise) {
-    promise.then(function(res){ if(successFn) successFn(res); })
-           .catch(function(e){ if(failFn) failFn(e); else console.error(e); });
-  };
+  return new Promise(function(resolve, reject) {
+    var cb = '_gasCb' + (++_cbCount);
+    var url = APPS_SCRIPT_URL + '?callback=' + cb + '&action=' + encodeURIComponent(action)
+            + '&data=' + encodeURIComponent(JSON.stringify(data));
+    var script = document.createElement('script');
+    var timer = setTimeout(function(){ cleanup(); reject(new Error('Timeout')); }, 30000);
+    function cleanup(){ delete window[cb]; document.head.removeChild(script); clearTimeout(timer); }
+    window[cb] = function(data){ cleanup(); resolve(data); };
+    script.onerror = function(){ cleanup(); reject(new Error('Network error')); };
+    script.src = url;
+    document.head.appendChild(script);
+  });
 }
 /* page navigation */
 var APPS_SCRIPT_PAGE_URL = 'https://script.google.com/macros/s/AKfycbw5aG84Eiq7VmUwACVwbhhT_SIsUY9T15n1HzCqnK8vegCOecgZNr8IhRfUjNQ42PosuQ/exec';
