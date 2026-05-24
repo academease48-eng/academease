@@ -657,7 +657,7 @@ function _saveSession(userName, role, userId) {
 }
 
 /* ════════ URL CACHE ════════ */
-var _urlCache = { index: null, teacher: null, dashboard: null };
+// _urlCache defined above with GitHub Pages paths
 
 /* ════════ SLOW-LOAD WARNING ════════ */
 var _slowTimer = null;
@@ -761,7 +761,7 @@ function doTeacherLogin() {
       var uId   = (res.user && res.user.user_id)   || '';
       _saveSession(uName, 'TEACHER', uId);
       showProgress('Signing you in', 'Opening your teaching dashboard…', _teacherSteps, 600);
-      setTimeout(function(){ window.location.href = _urlCache.teacher; }, 1200);
+      setTimeout(function(){ window.location.href = _urlCache.teacher || 'teacher/teacher.html'; }, 1200);
     }).catch(function() {
       setBtnLoading('tBtn', false);
       document.getElementById('loginErr').style.display = 'block';
@@ -789,7 +789,7 @@ function doAdminLogin() {
       var uId   = (res.user && res.user.user_id)   || '';
       _saveSession(uName, 'ADMIN', uId);
       showProgress('Signing you in', 'Opening the admin dashboard…', _adminSteps, 600);
-      setTimeout(function(){ window.location.href = _urlCache.dashboard; }, 1200);
+      setTimeout(function(){ window.location.href = _urlCache.dashboard || 'dashboard/dashboard.html'; }, 1200);
     }).catch(function() {
       setBtnLoading('aBtn', false);
       document.getElementById('loginErr').style.display = 'block';
