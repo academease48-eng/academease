@@ -750,8 +750,8 @@ function doTeacherLogin() {
         err.style.animation = 'none'; void err.offsetWidth; err.style.animation = '';
         return;
       }
-      var uName = (res.user && res.user.user_name) || 'Teacher';
-      var uId   = (res.user && res.user.user_id)   || '';
+      var uName = (res.user && res.user.username) || 'Teacher';
+      var uId   = (res.user && res.user.user_id)  || '';
       _saveSession(uName, 'TEACHER', uId);
       showProgress('Signing you in', 'Opening your teaching dashboard…', _teacherSteps, 600);
       setTimeout(function(){ window.location.href = _urlCache.teacher || 'teacher/teacher.html'; }, 1200);
@@ -778,7 +778,7 @@ function doAdminLogin() {
         err.style.animation = 'none'; void err.offsetWidth; err.style.animation = '';
         return;
       }
-      var uName = (res.user && res.user.user_name) || 'Admin';
+      var uName = (res.user && res.user.username) || 'Admin';
       var uId   = (res.user && res.user.user_id)   || '';
       _saveSession(uName, 'ADMIN', uId);
       showProgress('Signing you in', 'Opening the admin dashboard…', _adminSteps, 600);
