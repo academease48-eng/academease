@@ -6616,8 +6616,7 @@ function p6wLoadProgress() {
   if (!body) return;
   if (!_p6w.classId || !_p6w.termId) { body.innerHTML = '<div style="color:var(--muted);font-size:12px">Select a class and term first.</div>'; return; }
   body.innerHTML = '<div class="spinner" style="margin:8px auto"></div>';
-
-  _gasGet('adminGetP6WeeklyReport',{classId:selClass,termId:selTerm}).then(function(res) {
+_gasGet('adminGetP6WeeklyReport',{classId:_p6w.classId,termId:_p6w.termId}).then(function(res) {
       if (!res || !res.ok) { body.innerHTML = '<div style="color:#b22222;font-size:12px">'+esc(res&&res.error||'Error')+'</div>'; return; }
       if (!res.weeks || !res.weeks.length) { body.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px 0">No weeks created yet.</div>'; return; }
 
@@ -6682,7 +6681,7 @@ function p6wConfirmNewWeek() {
 
   showLoading('Creating ' + label, ['Setting up week', 'Seeding student rows', 'Ready for entry']);
 
-  _gasPost('adminAddP6Week',{classId:selClass,termId:selTerm,weekLabel:label}).then(function(res) {
+ _gasPost('adminAddP6Week',{classId:_p6w.classId,termId:_p6w.termId,weekLabel:label}).then(function(res) {
       hideLoading();
       if (btn) { btn.disabled = false; btn.textContent = '➕ New Week'; }
       if (!res || !res.ok) { showToast(res && res.error || 'Failed to create week', 'err'); return; }
