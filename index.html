@@ -404,10 +404,10 @@ html,body{height:100%;font-family:var(--font-body);-webkit-font-smoothing:antial
           <!-- Teacher form -->
           <div id="teacherForm">
             <div class="fld">
-              <label class="fld-lbl" for="tName">Teacher Name</label>
+              <label class="fld-lbl" for="tName">Username</label>
               <div class="fld-wrap">
                 <span class="fld-icon">👤</span>
-                <input class="fld-inp" id="tName" type="text" placeholder="e.g. Mrs. Mukamana" autocomplete="off">
+                <input class="fld-inp" id="tName" type="text" placeholder="Enter your username" autocomplete="off">
               </div>
             </div>
             <div class="fld">
@@ -638,10 +638,15 @@ function _renderProgSteps(steps, activeIdx) {
 }
 
 /* ════════ SESSION ════════ */
-function _saveSession(userName, role, userId) {
+function _saveSession(userName, role, userId, displayName) {
   try {
     localStorage.setItem('ae_userName', userName);
     localStorage.setItem('ae_userRole', role);
+    // Store displayName separately so UI shows real name, not username
+    if (displayName) {
+      localStorage.setItem('ae_displayName', displayName);
+      sessionStorage.setItem('displayName', displayName);
+    }
     if (userId) localStorage.setItem('ae_userId', userId);
     sessionStorage.setItem('userName', userName);
     sessionStorage.setItem('userRole', role);
@@ -750,9 +755,10 @@ function doTeacherLogin() {
         err.style.animation = 'none'; void err.offsetWidth; err.style.animation = '';
         return;
       }
-      var uName = (res.user && res.user.user_name) || 'Teacher'; // user_name = display name, username = login credential
-      var uId   = (res.user && res.user.user_id)  || '';
-      _saveSession(uName, 'TEACHER', uId);
+      var displayName = (res.user && (res.user.displayName || res.user.name || res.user.username)) || 'Teacher';
+      var uUsername   = (res.user && res.user.username) || '';  // used for API calls (getTeacherBatchData)
+      var uId         = (res.user && res.user.user_id)  || '';
+      _saveSession(uUsername, 'TEACHER', uId, displayName);
       showProgress('Signing you in', 'Opening your teaching dashboard…', _teacherSteps, 600);
       setTimeout(function(){ window.location.href = _urlCache.teacher || 'teacher/teacher.html'; }, 1200);
     }).catch(function() {
@@ -778,9 +784,10 @@ function doAdminLogin() {
         err.style.animation = 'none'; void err.offsetWidth; err.style.animation = '';
         return;
       }
-      var uName = (res.user && res.user.user_name) || 'Admin'; // user_name = display name, username = login credential
-      var uId   = (res.user && res.user.user_id)   || '';
-      _saveSession(uName, 'ADMIN', uId);
+      var displayName = (res.user && (res.user.displayName || res.user.name || res.user.username)) || 'Admin';
+      var uUsername   = (res.user && res.user.username) || '';
+      var uId         = (res.user && res.user.user_id)  || '';
+      _saveSession(uUsername, 'ADMIN', uId, displayName);
       showProgress('Signing you in', 'Opening the admin dashboard…', _adminSteps, 600);
       setTimeout(function(){ window.location.href = _urlCache.dashboard || 'dashboard/dashboard.html'; }, 1200);
     }).catch(function() {
