@@ -1868,11 +1868,23 @@ function _gasGet(action, params) {
   });
 }
 function _gasPost(action, data) {
+  var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var timeoutId  = controller
+    ? setTimeout(function() { controller.abort(); }, 90000)  // 90-second timeout for large classes
+    : null;
   return fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: action, data: data })
-  }).then(function(r) { return r.json(); });
+    body: JSON.stringify({ action: action, data: data }),
+    signal: controller ? controller.signal : undefined
+  }).then(function(r) {
+    if (timeoutId) clearTimeout(timeoutId);
+    return r.json();
+  }).catch(function(err) {
+    if (timeoutId) clearTimeout(timeoutId);
+    if (err && err.name === 'AbortError') throw new Error('Request timed out — server is still saving, please wait and refresh.');
+    throw err;
+  });
 }
 /* page navigation */
 function _pageUrl(page) {
@@ -3242,27 +3254,53 @@ function saveAllChanges() {
   document.getElementById('btnSaveAll').disabled = true;
   showSaveBar(updates.length);
 
-  _gasPost('teacherBatchSaveMarks',updates).then(function(res) {
-      hideSaveBar(res && res.ok);
+  // ── Chunked save: send 30 marks at a time to avoid GAS timeout on large classes ──
+  var CHUNK_SIZE = 30;
+  var chunks = [];
+  for (var ci = 0; ci < updates.length; ci += CHUNK_SIZE) {
+    chunks.push(updates.slice(ci, ci + CHUNK_SIZE));
+  }
+  var totalChunks = chunks.length;
+  var savedCount  = 0;
+
+  function _saveNextChunk(idx) {
+    if (idx >= totalChunks) {
+      // All chunks done — commit to local state
+      hideSaveBar(true);
+      Object.keys(dirty).forEach(function(mId) {
+        var m = _focus.marks.find(function(x){ return x.mark_id===mId; });
+        if (m) Object.assign(m, dirty[mId]);
+        var gm = (_data.marks||[]).find(function(x){ return x.mark_id===mId; });
+        if (gm) Object.assign(gm, dirty[mId]);
+      });
+      _focus.dirty = {};
+      _clearQueue();
+      showToast('Saved successfully ✓ (' + savedCount + ' marks)','ok');
+      _renderFocusPage();
+      if (typeof renderMarksEntry === 'function') { try { renderMarksEntry(); } catch(e){} }
+      return;
+    }
+    var chunk   = chunks[idx];
+    var pctDone = Math.round((idx / totalChunks) * 88);
+    updateSaveBar(pctDone, 'Saving chunk ' + (idx+1) + ' of ' + totalChunks + '…');
+
+    _gasPost('teacherBatchSaveMarks', chunk).then(function(res) {
       if (res && res.ok) {
-        Object.keys(dirty).forEach(function(mId) {
-          var m = _focus.marks.find(function(x){ return x.mark_id===mId; });
-          if (m) Object.assign(m, dirty[mId]);
-          var gm = (_data.marks||[]).find(function(x){ return x.mark_id===mId; });
-          if (gm) Object.assign(gm, dirty[mId]);
-        });
-        _focus.dirty = {};
-        _clearQueue();
-        showToast('Saved successfully ✓','ok');
-        // Re-render in-place — stay on same focus page, no navigation
-        _renderFocusPage();
-        // Update the course picker cards in background (non-blocking)
-        if (typeof renderMarksEntry === 'function') { try { renderMarksEntry(); } catch(e){} }
+        savedCount += chunk.length;
+        _saveNextChunk(idx + 1);
       } else {
-        showToast((res && res.error)||'Save failed','err');
+        hideSaveBar(false);
+        showToast((res && res.error) || 'Save failed on chunk ' + (idx+1), 'err');
         document.getElementById('btnSaveAll').disabled = false;
       }
-    })
+    }).catch(function(err) {
+      hideSaveBar(false);
+      showToast((err && err.message) || 'Network error — please retry', 'err');
+      document.getElementById('btnSaveAll').disabled = false;
+    });
+  }
+
+  _saveNextChunk(0);
 }
 
 /* ── Auto-sync queued marks when back online ── */
@@ -3275,21 +3313,33 @@ window.addEventListener('online', function() {
 
   showSaveBar(updates.length, 'Syncing');
 
-  _gasPost('teacherBatchSaveMarks',updates).then(function(res) {
-      hideSaveBar(res && res.ok);
-      if (res && res.ok) {
-        updates.forEach(function(u) {
-          var m = (_data.marks||[]).find(function(x){ return x.mark_id===u.markId; });
-          if (m) Object.assign(m, u.values);
-        });
-        _clearQueue();
-        showToast('Sync complete ✓','ok');
-        if (_focus && _focus.students && _focus.students.length) _renderFocusPage();
-        renderMarksEntry();
-      } else {
-        showToast('Sync failed — will retry next time you go online','err');
-      }
-    })
+  // Chunk the offline queue replay to match the same limits as live saving
+  var SYNC_CHUNK = 30;
+  var syncChunks = [];
+  for (var si = 0; si < updates.length; si += SYNC_CHUNK) {
+    syncChunks.push(updates.slice(si, si + SYNC_CHUNK));
+  }
+  var syncIdx = 0;
+  function _syncNextChunk() {
+    if (syncIdx >= syncChunks.length) {
+      hideSaveBar(true);
+      updates.forEach(function(u) {
+        var m = (_data && _data.marks||[]).find(function(x){ return x.mark_id===u.markId; });
+        if (m) Object.assign(m, u.values);
+      });
+      _clearQueue();
+      showToast('Sync complete ✓','ok');
+      if (_focus && _focus.students && _focus.students.length) _renderFocusPage();
+      if (typeof renderMarksEntry === 'function') renderMarksEntry();
+      return;
+    }
+    updateSaveBar(Math.round((syncIdx / syncChunks.length) * 88), 'Syncing chunk ' + (syncIdx+1) + ' of ' + syncChunks.length + '…');
+    _gasPost('teacherBatchSaveMarks', syncChunks[syncIdx]).then(function(res) {
+      if (res && res.ok) { syncIdx++; _syncNextChunk(); }
+      else { hideSaveBar(false); showToast('Sync failed — will retry next time you go online','err'); }
+    }).catch(function() { hideSaveBar(false); showToast('Sync failed — will retry next time you go online','err'); });
+  }
+  _syncNextChunk();
 });
 
 /* ── Export CSV ── */
