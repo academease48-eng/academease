@@ -1,121 +1,811 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AcademEase — Upgrade in Progress</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0a0f1e;
-      color: #f0efea;
-      min-height: 100vh;
-    }
-    .page {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 1.5rem;
-      text-align: center;
-    }
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(55,138,221,0.12);
-      border: 0.5px solid rgba(55,138,221,0.35);
-      color: #85b7eb;
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      padding: 5px 16px;
-      border-radius: 100px;
-      margin-bottom: 2.5rem;
-      text-transform: uppercase;
-    }
-    .pulse {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: #378add;
-      animation: pulse 2s infinite;
-      flex-shrink: 0;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.7); }
-    }
-    .logo-mark {
-      width: 68px; height: 68px;
-      border-radius: 16px;
-      background: rgba(55,138,221,0.1);
-      border: 0.5px solid rgba(55,138,221,0.25);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 2rem;
-    }
-    .logo-mark i { font-size: 32px; color: #378add; }
-    h1 {
-      font-size: clamp(26px, 5vw, 44px);
-      font-weight: 600;
-      color: #f0efea;
-      line-height: 1.2;
-      letter-spacing: -0.02em;
-      margin-bottom: 1.25rem;
-    }
-    h1 span { color: #378add; }
-    .sub {
-      font-size: 16px;
-      color: #5f5e5a;
-      line-height: 1.8;
-      max-width: 400px;
-      margin: 0 auto 2.75rem;
-    }
-    .cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: #378add;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 500;
-      padding: 0.85rem 2rem;
-      border-radius: 10px;
-      text-decoration: none;
-      transition: background 0.15s, transform 0.1s;
-    }
-    .cta:hover { background: #185fa5; transform: translateY(-1px); }
-    .cta:active { transform: translateY(0); }
-    .cta i { font-size: 17px; }
-    .note {
-      margin-top: 2.5rem;
-      font-size: 13px;
-      color: #2c2c2a;
-    }
-  </style>
+<meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232563eb'/%3E%3Cpath d='M20 42V22l12-8 12 8v20' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='32' cy='34' r='3' fill='%23fff'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AcademEase::school Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#2563eb;--blue-d:#1d4ed8;--blue-l:#eff6ff;--blue-m:#bfdbfe;--blue-glow:rgba(37,99,235,.45);
+  --cyan:#06b6d4;--cyan-l:rgba(6,182,212,.15);
+  --green:#10b981;--red:#ef4444;--red-l:#fef2f2;
+  --amber:#f59e0b;
+  --navy:#0a0f1e;--navy2:#0d1529;--navy3:#111d35;--navy4:#162040;
+  --ink:#111827;--ink2:#1f2937;--muted:#6b7280;--faint:#9ca3af;
+  --line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.04);
+  --white:#fff;
+  --font-head:'Sora',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --r8:8px;--r10:10px;--r12:12px;--r16:16px;--r20:20px;--r24:24px;
+  --sh-blue:0 8px 32px rgba(37,99,235,.35);
+  --sh-card:0 24px 64px rgba(0,0,0,.5),0 4px 16px rgba(0,0,0,.3);
+}
+html,body{height:100%;font-family:var(--font-body);-webkit-font-smoothing:antialiased;background:var(--navy);overflow-x:hidden}
+
+/* ════════════ SPLASH ════════════ */
+#splash{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;z-index:9999;transition:opacity .5s ease .1s}
+#splash.out{opacity:0;pointer-events:none}
+.sp-logo{display:flex;align-items:center;gap:14px}
+.sp-ico{width:56px;height:56px;background:linear-gradient(135deg,var(--blue-d),var(--blue));border-radius:14px;display:grid;place-items:center;box-shadow:0 0 40px var(--blue-glow)}
+.sp-ico svg{width:30px;height:30px}
+.sp-wordmark{font-family:var(--font-head);font-size:30px;font-weight:800;color:var(--white);letter-spacing:-.5px}
+.sp-wordmark span{color:var(--cyan)}
+.sp-bar{width:180px;height:2px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;margin-top:4px}
+.sp-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:99px;animation:spFill 1.5s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes spFill{from{width:0}to{width:100%}}
+.sp-sub{font-size:11px;color:rgba(255,255,255,.35);font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+
+/* ════ SLOW-LOAD WARNING ════ */
+#slowWarning{display:none;flex-direction:column;align-items:center;gap:10px;margin-top:8px;animation:fadeUp .5s ease both}
+.sw-box{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:14px 20px;max-width:280px;text-align:center}
+.sw-icon{font-size:22px;margin-bottom:6px}
+.sw-title{font-size:12px;font-weight:700;color:#fcd34d;margin-bottom:4px;letter-spacing:.3px}
+.sw-msg{font-size:11px;color:rgba(255,255,255,.45);line-height:1.6}
+.sw-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:#f59e0b;margin:0 2px;animation:swDot 1.2s ease-in-out infinite}
+.sw-dots span:nth-child(2){animation-delay:.2s}
+.sw-dots span:nth-child(3){animation-delay:.4s}
+@keyframes swDot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.sw-retry{margin-top:10px;padding:7px 16px;border-radius:99px;border:1px solid rgba(245,158,11,.4);background:rgba(245,158,11,.1);color:#fcd34d;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--font-body)}
+.sw-retry:hover{background:rgba(245,158,11,.2)}
+
+/* ════════════ TOAST ════════════ */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(120px);background:#1e293b;color:#fff;padding:10px 22px;border-radius:99px;font-size:13px;font-weight:600;z-index:9998;transition:transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;box-shadow:var(--sh-card);font-family:var(--font-body);border:1px solid rgba(255,255,255,.1)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.ok{background:#064e3b;border-color:#10b981}
+#toast.err{background:#7f1d1d;border-color:#ef4444}
+
+/* ════════════ PROGRESS MODAL ════════════ */
+#progressOverlay{display:none;position:fixed;inset:0;background:rgba(5,8,20,.7);backdrop-filter:blur(8px);z-index:9990;align-items:center;justify-content:center;padding:20px}
+#progressOverlay.open{display:flex}
+.prog-modal{background:var(--navy3);border-radius:20px;width:100%;max-width:380px;padding:28px 28px 24px;box-shadow:var(--sh-card);border:1px solid rgba(37,99,235,.3);animation:progIn .3s cubic-bezier(.22,.68,0,1.2)}
+@keyframes progIn{from{opacity:0;transform:scale(.94) translateY(12px)}to{opacity:1;transform:none}}
+.prog-brand{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.prog-brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue-d),var(--blue));border-radius:10px;display:grid;place-items:center;font-size:18px;flex-shrink:0;box-shadow:0 3px 10px var(--blue-glow)}
+.prog-brand-name{font-size:15px;font-weight:800;color:var(--white);letter-spacing:-.3px;font-family:var(--font-head)}
+.prog-brand-sub{font-size:10px;color:rgba(255,255,255,.4);font-weight:500;margin-top:1px}
+.prog-title{font-size:16px;font-weight:800;color:var(--white);margin-bottom:6px;letter-spacing:-.3px;font-family:var(--font-head)}
+.prog-subtitle{font-size:12px;color:rgba(255,255,255,.45);font-weight:500;margin-bottom:18px;line-height:1.5}
+.prog-bar-wrap{height:4px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;margin-bottom:20px}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0%}
+.prog-steps{display:flex;flex-direction:column;gap:8px}
+.prog-step{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;transition:all .25s}
+.prog-step.done{background:rgba(16,185,129,.1)}
+.prog-step.active{background:rgba(37,99,235,.15)}
+.prog-step.wait{background:transparent;opacity:.35}
+.prog-step-dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0}
+.prog-step.done .prog-step-dot{background:var(--green);color:#fff}
+.prog-step.active .prog-step-dot{background:var(--blue);color:#fff;animation:dotPulse 1s ease-in-out infinite}
+.prog-step.wait .prog-step-dot{background:rgba(255,255,255,.08);color:rgba(255,255,255,.3)}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 0 0 var(--blue-glow)}50%{box-shadow:0 0 0 5px transparent}}
+.prog-step-label{font-size:12.5px;font-weight:600;flex:1}
+.prog-step.done .prog-step-label{color:var(--green)}
+.prog-step.active .prog-step-label{color:#93c5fd}
+.prog-step.wait .prog-step-label{color:rgba(255,255,255,.3)}
+.prog-step-check{font-size:13px;color:var(--green);opacity:0;transition:opacity .2s}
+.prog-step.done .prog-step-check{opacity:1}
+
+/* ════════════ LANDING WRAPPER ════════════ */
+#landingPage{display:none;min-height:100vh;flex-direction:column;background:var(--navy)}
+
+/* ── NAV ── */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 5%;height:64px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:rgba(10,15,30,.8);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-brand-ico{width:34px;height:34px;background:linear-gradient(135deg,var(--blue-d),var(--blue));border-radius:9px;display:grid;place-items:center;box-shadow:0 0 16px var(--blue-glow)}
+.nav-brand-ico svg{width:18px;height:18px}
+.nav-brand-name{font-family:var(--font-head);font-size:17px;font-weight:800;color:var(--white);letter-spacing:-.3px}
+.nav-brand-name span{color:var(--cyan)}
+.nav-links{display:flex;align-items:center;gap:6px}
+.nav-link{padding:7px 14px;border-radius:var(--r8);font-size:13px;font-weight:600;color:rgba(255,255,255,.55);cursor:pointer;transition:all .15s;border:none;background:transparent;font-family:var(--font-body);text-decoration:none}
+.nav-link:hover{color:var(--white);background:rgba(255,255,255,.06)}
+.nav-cta{padding:8px 18px;border-radius:var(--r8);font-size:13px;font-weight:700;color:var(--white);background:var(--blue);border:none;cursor:pointer;font-family:var(--font-body);transition:all .18s;box-shadow:0 0 20px var(--blue-glow)}
+.nav-cta:hover{background:var(--blue-d);transform:translateY(-1px);box-shadow:0 4px 24px var(--blue-glow)}
+
+/* ── HERO ── */
+.hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:80px 5% 60px;gap:60px;position:relative;overflow:hidden}
+
+/* Blob background shapes */
+.hero::before{content:'';position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.18) 0%,transparent 70%);top:-200px;right:-100px;pointer-events:none;animation:blobFloat1 8s ease-in-out infinite}
+.hero::after{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,.12) 0%,transparent 70%);bottom:-100px;left:30%;pointer-events:none;animation:blobFloat2 10s ease-in-out infinite}
+@keyframes blobFloat1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-30px,20px) scale(1.05)}}
+@keyframes blobFloat2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(20px,-30px) scale(1.08)}}
+
+/* Grid dots */
+.hero-grid{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.04) 1px,transparent 1px);background-size:36px 36px;pointer-events:none}
+
+.hero-left{position:relative;z-index:2;animation:fadeUp .7s cubic-bezier(.22,.68,0,1.2) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
+
+.hero-badge{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.35);border-radius:99px;font-size:11.5px;font-weight:700;color:#93c5fd;margin-bottom:22px;letter-spacing:.3px;animation:fadeUp .6s cubic-bezier(.22,.68,0,1.2) .1s both}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+.hero-h1{font-family:var(--font-head);font-size:clamp(36px,4.5vw,58px);font-weight:800;color:var(--white);line-height:1.08;letter-spacing:-1.5px;margin-bottom:18px;animation:fadeUp .6s cubic-bezier(.22,.68,0,1.2) .15s both}
+.hero-h1 .accent{background:linear-gradient(135deg,#60a5fa,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.hero-desc{font-size:16px;color:rgba(255,255,255,.5);line-height:1.65;max-width:460px;font-weight:400;margin-bottom:32px;animation:fadeUp .6s cubic-bezier(.22,.68,0,1.2) .2s both}
+
+.hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;animation:fadeUp .6s cubic-bezier(.22,.68,0,1.2) .25s both}
+.btn-hero{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:var(--r12);font-family:var(--font-head);font-size:14px;font-weight:700;cursor:pointer;transition:all .18s;border:none;letter-spacing:.1px}
+.btn-hero.primary{background:linear-gradient(135deg,var(--blue),#3b82f6);color:#fff;box-shadow:0 4px 24px var(--blue-glow)}
+.btn-hero.primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px var(--blue-glow)}
+.btn-hero.secondary{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12)}
+.btn-hero.secondary:hover{background:rgba(255,255,255,.1);color:var(--white)}
+
+.hero-stats{display:flex;gap:28px;margin-top:36px;flex-wrap:wrap;animation:fadeUp .6s cubic-bezier(.22,.68,0,1.2) .3s both}
+.hero-stat{display:flex;flex-direction:column}
+.hero-stat-num{font-family:var(--font-head);font-size:26px;font-weight:800;color:var(--white);letter-spacing:-1px;line-height:1}
+.hero-stat-num span{color:var(--cyan)}
+.hero-stat-lbl{font-size:11px;color:rgba(255,255,255,.35);font-weight:500;margin-top:3px;text-transform:uppercase;letter-spacing:.6px}
+.hero-stat-div{width:1px;background:rgba(255,255,255,.08);align-self:stretch;margin:4px 0}
+
+/* ── HERO RIGHT — Login Card ── */
+.hero-right{position:relative;z-index:2;display:flex;justify-content:center;animation:fadeUp .7s cubic-bezier(.22,.68,0,1.2) .2s both}
+
+/* Glowing ring behind card */
+.card-glow{position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.25) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;filter:blur(20px)}
+
+.login-card{width:100%;max-width:400px;background:rgba(13,21,41,.9);border-radius:var(--r20);border:1px solid rgba(255,255,255,.1);box-shadow:var(--sh-card);overflow:hidden;backdrop-filter:blur(16px);position:relative}
+
+.lc-header{background:linear-gradient(135deg,rgba(29,78,216,.8),rgba(37,99,235,.6));padding:24px 26px 20px;border-bottom:1px solid rgba(255,255,255,.07);position:relative;overflow:hidden}
+.lc-header::after{content:'';position:absolute;right:-40px;top:-40px;width:120px;height:120px;background:rgba(255,255,255,.04);border-radius:50%}
+.lc-brand{display:flex;align-items:center;gap:12px;margin-bottom:10px;position:relative;z-index:1}
+.lc-brand-ico{width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:var(--r10);display:grid;place-items:center;border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(8px)}
+.lc-brand-ico svg{width:22px;height:22px}
+.lc-brand-name{font-family:var(--font-head);font-size:20px;font-weight:800;color:#fff;letter-spacing:-.4px}
+.lc-brand-year{font-size:10.5px;color:rgba(255,255,255,.5);font-weight:500;margin-top:2px}
+.lc-sub{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5;position:relative;z-index:1}
+
+.lc-body{padding:24px 26px}
+
+/* Role tabs */
+.role-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:var(--r10);padding:4px;margin-bottom:22px}
+.role-tab{padding:9px;border:none;background:transparent;border-radius:var(--r8);font-family:var(--font-body);font-size:12.5px;font-weight:700;color:rgba(255,255,255,.4);cursor:pointer;transition:all .18s}
+.role-tab.active{background:var(--blue);color:#fff;box-shadow:0 2px 12px var(--blue-glow)}
+
+/* Fields */
+.fld{margin-bottom:16px}
+.fld-lbl{display:block;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:7px}
+.fld-wrap{position:relative}
+.fld-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;opacity:.6}
+.fld-inp{width:100%;padding:12px 13px 12px 40px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:var(--r10);font-family:var(--font-body);font-size:13.5px;font-weight:500;color:var(--white);outline:none;transition:all .18s}
+.fld-inp:focus{border-color:var(--blue);background:rgba(37,99,235,.1);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.fld-inp::placeholder{color:rgba(255,255,255,.2)}
+
+.btn-main{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px 20px;border:none;border-radius:var(--r10);font-family:var(--font-head);font-size:14px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--blue),#3b82f6);color:#fff;transition:all .18s;box-shadow:0 2px 16px var(--blue-glow)}
+.btn-main:hover:not(:disabled){background:linear-gradient(135deg,var(--blue-d),var(--blue));box-shadow:0 4px 24px var(--blue-glow);transform:translateY(-1px)}
+.btn-main:active:not(:disabled){transform:translateY(0)}
+.btn-main:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-arrow{transition:transform .18s}
+.btn-main:hover:not(:disabled) .btn-arrow{transform:translateX(3px)}
+.btn-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;display:none}
+.btn-main.loading .btn-spinner{display:block}
+.btn-main.loading .btn-txt,.btn-main.loading .btn-arrow{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.login-err{margin-top:12px;padding:10px 14px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--r8);font-size:12px;color:#fca5a5;font-weight:600;display:none;animation:shakeIn .3s ease}
+@keyframes shakeIn{0%{transform:translateX(-5px)}25%{transform:translateX(5px)}50%{transform:translateX(-3px)}75%{transform:translateX(3px)}100%{transform:none}}
+
+.lc-footer{text-align:center;padding:12px 26px 18px;font-size:10.5px;color:rgba(255,255,255,.2);border-top:1px solid rgba(255,255,255,.05)}
+
+/* ════════════ FEATURES SECTION ════════════ */
+.features{padding:80px 5%;position:relative}
+.features::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
+
+.section-eyebrow{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--cyan);margin-bottom:12px}
+.section-title{font-family:var(--font-head);font-size:clamp(28px,3.5vw,42px);font-weight:800;color:var(--white);letter-spacing:-1px;margin-bottom:14px;line-height:1.1}
+.section-title .accent{background:linear-gradient(135deg,#60a5fa,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.section-desc{font-size:15px;color:rgba(255,255,255,.45);max-width:520px;line-height:1.65}
+.section-head{margin-bottom:50px}
+
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.feat-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:var(--r16);padding:26px;transition:all .22s;cursor:default;position:relative;overflow:hidden}
+.feat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(37,99,235,.07),transparent);opacity:0;transition:opacity .22s}
+.feat-card:hover{border-color:rgba(37,99,235,.35);transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,.3)}
+.feat-card:hover::before{opacity:1}
+.feat-icon{width:48px;height:48px;border-radius:var(--r12);display:grid;place-items:center;font-size:22px;margin-bottom:18px;position:relative;z-index:1}
+.feat-icon.blue{background:rgba(37,99,235,.2);border:1px solid rgba(37,99,235,.3)}
+.feat-icon.cyan{background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.25)}
+.feat-icon.green{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25)}
+.feat-icon.amber{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.25)}
+.feat-icon.purple{background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.25)}
+.feat-icon.red{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.25)}
+.feat-name{font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--white);margin-bottom:8px;position:relative;z-index:1}
+.feat-desc{font-size:13px;color:rgba(255,255,255,.4);line-height:1.6;position:relative;z-index:1}
+
+/* ════════════ HOW IT WORKS STRIP ════════════ */
+.howit{padding:60px 5%;background:rgba(255,255,255,.02);border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+.howit::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(37,99,235,.08) 0%,transparent 70%);pointer-events:none}
+.howit-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0;position:relative;z-index:1}
+.howit-step{display:flex;flex-direction:column;align-items:center;text-align:center;padding:30px 20px;position:relative}
+.howit-step+.howit-step::before{content:'→';position:absolute;left:0;top:50%;transform:translateY(-50%);font-size:18px;color:rgba(255,255,255,.1)}
+.howit-num{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--blue-d),var(--blue));display:grid;place-items:center;font-family:var(--font-head);font-size:15px;font-weight:800;color:#fff;margin-bottom:14px;box-shadow:0 0 20px var(--blue-glow)}
+.howit-title{font-family:var(--font-head);font-size:13.5px;font-weight:700;color:var(--white);margin-bottom:6px}
+.howit-desc{font-size:12px;color:rgba(255,255,255,.35);line-height:1.55}
+
+/* ════════════ STATS BANNER ════════════ */
+.stats-banner{padding:70px 5%}
+.stats-inner{background:linear-gradient(135deg,rgba(29,78,216,.3),rgba(37,99,235,.15));border:1px solid rgba(37,99,235,.25);border-radius:var(--r20);padding:50px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0;position:relative;overflow:hidden;backdrop-filter:blur(8px)}
+.stats-inner::before{content:'';position:absolute;right:-60px;top:-60px;width:250px;height:250px;background:radial-gradient(circle,rgba(6,182,212,.12) 0%,transparent 70%)}
+.stat-item{text-align:center;padding:20px;position:relative;z-index:1}
+.stat-item+.stat-item::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:1px;background:rgba(255,255,255,.08)}
+.stat-num{font-family:var(--font-head);font-size:42px;font-weight:800;color:var(--white);letter-spacing:-2px;line-height:1;margin-bottom:6px}
+.stat-num .plus{color:var(--cyan);font-size:32px}
+.stat-label{font-size:12px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+
+/* ════════════ FOOTER ════════════ */
+.footer{padding:24px 5%;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.footer-brand{display:flex;align-items:center;gap:10px}
+.footer-brand-name{font-family:var(--font-head);font-size:14px;font-weight:800;color:rgba(255,255,255,.4)}
+.footer-brand-name span{color:rgba(6,182,212,.6)}
+.footer-copy{font-size:11.5px;color:rgba(255,255,255,.2)}
+
+/* ════════════ RESPONSIVE ════════════ */
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;padding:80px 5% 40px;gap:40px;text-align:center}
+  .hero-left{display:flex;flex-direction:column;align-items:center}
+  .hero-desc{text-align:center}
+  .hero-right{width:100%;max-width:440px;margin:0 auto}
+  .hero-badge{align-self:center}
+  .howit-step+.howit-step::before{display:none}
+  .nav-links{display:none}
+}
+@media(max-width:600px){
+  .nav{padding:0 16px}
+  .hero{padding:72px 16px 32px;gap:28px}
+  .features{padding:50px 16px}
+  .howit{padding:40px 16px}
+  .stats-banner{padding:40px 16px}
+  .stats-inner{padding:28px 16px;gap:16px}
+  .stat-item+.stat-item::before{display:none}
+  .lc-body{padding:18px 18px}
+  .lc-header{padding:18px 18px 14px}
+  .footer{padding:16px;flex-direction:column;text-align:center}
+  .hero-stats{justify-content:center}
+  .hero-actions{justify-content:center}
+  .features-grid{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
-  <div class="page">
-    <div class="eyebrow">
-      <span class="pulse"></span>
-      Upgrade in progress
+
+<!-- ── SPLASH ── -->
+<div id="splash">
+  <div class="sp-logo">
+    <div class="sp-ico">
+      <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 3L3 10v2l12 7 12-7v-2L15 3z" fill="rgba(255,255,255,.9)"/>
+        <path d="M3 15v2l12 7 12-7v-2L15 20 3 15z" fill="rgba(255,255,255,.55)"/>
+        <path d="M3 19.5v2L15 29l12-7.5v-2L15 27 3 19.5z" fill="rgba(255,255,255,.25)"/>
+      </svg>
     </div>
-    <div class="logo-mark">
-      <i class="ti ti-school"></i>
-    </div>
-    <h1>AcademEase is being<br><span>upgraded</span></h1>
-    <p class="sub">
-      The system is fully operational.<br>We're refining the interface  back shortly.
-    </p>
-    <a class="cta" href="https://script.google.com/macros/s/AKfycbw5aG84Eiq7VmUwACVwbhhT_SIsUY9T15n1HzCqnK8vegCOecgZNr8IhRfUjNQ42PosuQ/exec?page=index" target="_blank" rel="noopener noreferrer">
-      <i class="ti ti-bolt"></i>
-      Meanwhile click here to use the current system
-    </a>
-    <p class="note">All data and access remain intact.</p>
+    <div class="sp-wordmark">Academ<span>Ease</span></div>
   </div>
+  <div class="sp-bar"><div class="sp-bar-fill"></div></div>
+  <div class="sp-sub" id="spSub">School Management System</div>
+
+  <!-- Shown after 8 seconds if server hasn't responded -->
+  <div id="slowWarning">
+    <div class="sw-box">
+      <div class="sw-icon">🔐</div>
+      <div class="sw-title">Establishing Secure Connection</div>
+      <div class="sw-msg">AcademEase is initializing your session and verifying credentials.<br>This may take a moment — please do not close this page.</div>
+      <div class="sw-dots" style="margin-top:10px"><span></span><span></span><span></span></div>
+    </div>
+    <button class="sw-retry" onclick="window.location.reload()">↺ Try Again</button>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toast"></div>
+
+<!-- ── PROGRESS MODAL ── -->
+<div id="progressOverlay">
+  <div class="prog-modal">
+    <div class="prog-brand">
+      <div class="prog-brand-icon">🎓</div>
+      <div>
+        <div class="prog-brand-name">AcademEase</div>
+        <div class="prog-brand-sub">School Management System</div>
+      </div>
+    </div>
+    <div class="prog-title" id="progTitle">Signing in…</div>
+    <div class="prog-subtitle" id="progSubtitle">Please wait a moment</div>
+    <div class="prog-bar-wrap"><div class="prog-bar-fill" id="progBarFill"></div></div>
+    <div class="prog-steps" id="progSteps"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     LANDING PAGE
+══════════════════════════════════════ -->
+<div id="landingPage">
+
+  <!-- ── NAVBAR ── -->
+  <nav class="nav">
+    <a class="nav-brand" href="#">
+      <div class="nav-brand-ico">
+        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 1.5L1.5 6v1L9 12l7.5-5V6L9 1.5z" fill="rgba(255,255,255,.9)"/>
+          <path d="M1.5 9v1L9 15l7.5-5V9L9 13.5 1.5 9z" fill="rgba(255,255,255,.5)"/>
+        </svg>
+      </div>
+      <div class="nav-brand-name">Academ<span>Ease</span></div>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="#features">Features</a>
+      <a class="nav-link" href="#howit">How It Works</a>
+      <a class="nav-link" href="#stats">About</a>
+    </div>
+    <button class="nav-cta" onclick="scrollToLogin()">Sign In →</button>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero" id="hero">
+    <div class="hero-grid"></div>
+
+    <div class="hero-left">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Academic Year 2025 / 2026
+      </div>
+      <h1 class="hero-h1">Smart School<br>Management<br><span class="accent">Made Simple</span></h1>
+      <p class="hero-desc">AcademEase gives teachers and administrators one unified platform to manage marks, discipline, deliberation, and report cards, with zero complexity.</p>
+      <div class="hero-actions">
+        <button class="btn-hero primary" onclick="scrollToLogin()">Get Started →</button>
+        <button class="btn-hero secondary" onclick="document.getElementById('howit').scrollIntoView({behavior:'smooth'})">How It Works</button>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">100<span>%</span></div>
+          <div class="hero-stat-lbl">REAL TIME</div>
+        </div>
+        <div class="hero-stat-div"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">0<span>ms</span></div>
+          <div class="hero-stat-lbl">Extra Setup</div>
+        </div>
+        <div class="hero-stat-div"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">2<span>+</span></div>
+          <div class="hero-stat-lbl">User Roles</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="card-glow"></div>
+      <div class="login-card" id="loginCard">
+
+        <div class="lc-header">
+          <div class="lc-brand">
+            <div class="lc-brand-ico">
+              <svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 2L2 7v1.5L11 14l9-5.5V7L11 2z" fill="rgba(255,255,255,.9)"/>
+                <path d="M2 11v1.5L11 18l9-5.5V11L11 16.5 2 11z" fill="rgba(255,255,255,.5)"/>
+              </svg>
+            </div>
+            <div>
+              <div class="lc-brand-name">AcademEase</div>
+              <div class="lc-brand-year">Academic Year 2025 / 2026</div>
+            </div>
+          </div>
+          <div class="lc-sub">Sign in to your school portal to continue</div>
+        </div>
+
+        <div class="lc-body">
+          <div class="role-tabs">
+            <button class="role-tab active" id="tabTeacher" onclick="switchRole('teacher')">🧑‍🏫 Teacher</button>
+            <button class="role-tab" id="tabAdmin" onclick="switchRole('admin')">👨‍💼 Admin</button>
+          </div>
+
+          <!-- Teacher form -->
+          <div id="teacherForm">
+            <div class="fld">
+              <label class="fld-lbl" for="tName">Teacher Name</label>
+              <div class="fld-wrap">
+                <span class="fld-icon">👤</span>
+                <input class="fld-inp" id="tName" type="text" placeholder="e.g. Mrs. Mukamana" autocomplete="off">
+              </div>
+            </div>
+            <div class="fld">
+              <label class="fld-lbl" for="tPass">Password</label>
+              <div class="fld-wrap">
+                <span class="fld-icon">🔑</span>
+                <input class="fld-inp" id="tPass" type="password" placeholder="Enter your password"
+                  onkeydown="if(event.key==='Enter')doTeacherLogin()">
+              </div>
+            </div>
+            <button class="btn-main" id="tBtn" onclick="doTeacherLogin()">
+              <div class="btn-spinner"></div>
+              <span class="btn-txt">Sign In</span>
+              <span class="btn-arrow">→</span>
+            </button>
+          </div>
+
+          <!-- Admin form -->
+          <div id="adminForm" style="display:none">
+            <div class="fld">
+              <label class="fld-lbl" for="aEmail">Admin Username</label>
+              <div class="fld-wrap">
+                <span class="fld-icon">📧</span>
+                <input class="fld-inp" id="aEmail" type="text" placeholder="admin@school.edu" autocomplete="off">
+              </div>
+            </div>
+            <div class="fld">
+              <label class="fld-lbl" for="aPass">Password</label>
+              <div class="fld-wrap">
+                <span class="fld-icon">🔐</span>
+                <input class="fld-inp" id="aPass" type="password" placeholder="Enter password"
+                  onkeydown="if(event.key==='Enter')doAdminLogin()">
+              </div>
+            </div>
+            <button class="btn-main" id="aBtn" onclick="doAdminLogin()">
+              <div class="btn-spinner"></div>
+              <span class="btn-txt">Admin Login</span>
+              <span class="btn-arrow">→</span>
+            </button>
+          </div>
+
+          <div class="login-err" id="loginErr">❌ Invalid credentials. Please check and try again.</div>
+        </div>
+
+        <div class="lc-footer">©2025–2026 AcademEase · All rights reserved</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ── -->
+  <section class="features" id="features">
+    <div class="section-head">
+      <div class="section-eyebrow">Everything You Need</div>
+      <h2 class="section-title">Built for <span class="accent">every role</span><br>in your school</h2>
+      <p class="section-desc">From marks entry to year end deliberation, AcademEase covers the full academic workflow in one place.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon blue">✏️</div>
+        <div class="feat-name">Marks Entry</div>
+        <div class="feat-desc">Enter Test 1, Test 2, and Exam scores per subject and subpart. Autovalidates against maximum scores in real time.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon cyan">📊</div>
+        <div class="feat-name">Live Dashboard</div>
+        <div class="feat-desc">Administrators get a full school overview  classes, subjects, completion rates, and pending tasks all in one view.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon green">⚖️</div>
+        <div class="feat-name">Deliberation</div>
+        <div class="feat-desc">Class teachers review yearly performance per student and set promotion, resit, or repeat decisions with comments.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon amber">🏅</div>
+        <div class="feat-name">Discipline Marks</div>
+        <div class="feat-desc">Track conduct scores for every student per term. Class teachers manage their homeroom class independently.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon purple">📄</div>
+        <div class="feat-name">Report Cards</div>
+        <div class="feat-desc">Generate polished, print-ready report cards per student or entire class</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon red">🔒</div>
+        <div class="feat-name">Role Based Access</div>
+        <div class="feat-desc">Teachers see only their assigned subjects and classes. Admins control everything. Secure and compartmentalised.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ── -->
+  <section class="howit" id="howit">
+    <div style="text-align:center;margin-bottom:44px">
+      <div class="section-eyebrow" style="justify-content:center;display:flex">Simple Process</div>
+      <h2 class="section-title" style="text-align:center">How AcademEase <span class="accent">works</span></h2>
+    </div>
+    <div class="howit-steps">
+      <div class="howit-step">
+        <div class="howit-num">1</div>
+        <div class="howit-title">Admin Sets Up</div>
+        <div class="howit-desc">Add classes, subjects, subparts, and assign teachers to courses</div>
+      </div>
+      <div class="howit-step">
+        <div class="howit-num">2</div>
+        <div class="howit-title">Teachers Enter Marks</div>
+        <div class="howit-desc">Each teacher logs in and fills scores for their assigned subjects per term</div>
+      </div>
+      <div class="howit-step">
+        <div class="howit-num">3</div>
+        <div class="howit-title">Deliberation</div>
+        <div class="howit-desc">Class teachers review full year performance and set each student's decision</div>
+      </div>
+      <div class="howit-step">
+        <div class="howit-num">4</div>
+        <div class="howit-title">Print Reports</div>
+        <div class="howit-desc">Admin generates and prints professional report cards for every student</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STATS ── -->
+  <section class="stats-banner" id="stats">
+    <div class="stats-inner">
+      <div class="stat-item">
+        <div class="stat-num">100<span class="plus">%</span></div>
+        <div class="stat-label">EDUTECH Powered</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">3<span class="plus">+</span></div>
+        <div class="stat-label">Terms Supported</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">∞</div>
+        <div class="stat-label">Students & Classes</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">1<span class="plus"></span></div>
+        <div class="stat-label">Unified Platform</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <div class="footer-brand">
+      <div class="footer-brand-name">Academ<span>Ease</span></div>
+    </div>
+    <div class="footer-copy">© 2025–2026 AcademEase · School Management System · Academic Year 2025/2026</div>
+  </footer>
+
+</div><!-- end landingPage -->
+
+<script>
+/* ══ GitHub Pages: JSONP helper (bypasses CORS) ══ */
+var APPS_SCRIPT_URL = 'https://mute-smoke-c8ea.academease48.workers.dev';
+var _cbCount = 0;
+function _gasGet(action, params) {
+  return new Promise(function(resolve, reject) {
+    var cb = '_gasCb' + (++_cbCount);
+    var url = APPS_SCRIPT_URL + '?callback=' + cb + '&action=' + encodeURIComponent(action);
+    if (params) Object.keys(params).forEach(function(k){
+      url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(String(params[k]||''));
+    });
+    var script = document.createElement('script');
+    var timer = setTimeout(function(){ cleanup(); reject(new Error('Timeout')); }, 30000);
+    function cleanup(){ delete window[cb]; document.head.removeChild(script); clearTimeout(timer); }
+    window[cb] = function(data){ cleanup(); resolve(data); };
+    script.onerror = function(){ cleanup(); reject(new Error('Network error')); };
+    script.src = url;
+    document.head.appendChild(script);
+  });
+}
+function _gasPost(action, data) {
+  return fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: action, data: data })
+  }).then(function(r) { return r.json(); });
+}
+var _urlCache = {
+  index:     'index.html',
+  teacher:   'teacher/teacher.html',
+  dashboard: 'dashboard/dashboard.html'
+};
+
+/* ════════ TOAST ════════ */
+var _toastTimer;
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ t.className = ''; }, 3200);
+}
+
+/* ════════ PROGRESS MODAL ════════ */
+var _progTimer = null;
+function showProgress(title, subtitle, steps, autoProgressMs) {
+  document.getElementById('progTitle').textContent = title || 'Processing…';
+  document.getElementById('progSubtitle').textContent = subtitle || '';
+  _renderProgSteps(steps, 0);
+  document.getElementById('progressOverlay').classList.add('open');
+  if (autoProgressMs) {
+    var i = 1;
+    _progTimer = setInterval(function(){
+      if (i >= steps.length) { clearInterval(_progTimer); return; }
+      _renderProgSteps(steps, i); i++;
+    }, autoProgressMs);
+  }
+}
+function hideProgress() {
+  clearInterval(_progTimer);
+  document.getElementById('progressOverlay').classList.remove('open');
+}
+function _renderProgSteps(steps, activeIdx) {
+  var pct = Math.round((activeIdx / steps.length) * 100);
+  document.getElementById('progBarFill').style.width = pct + '%';
+  var html = '';
+  steps.forEach(function(label, i){
+    var cls = i < activeIdx ? 'done' : i === activeIdx ? 'active' : 'wait';
+    var dot = i < activeIdx ? '✓' : (i + 1);
+    html += '<div class="prog-step ' + cls + '">'
+      + '<div class="prog-step-dot">' + dot + '</div>'
+      + '<div class="prog-step-label">' + label + '</div>'
+      + '<div class="prog-step-check">✓</div></div>';
+  });
+  document.getElementById('progSteps').innerHTML = html;
+}
+
+/* ════════ SESSION ════════ */
+function _saveSession(userName, role, userId) {
+  try {
+    localStorage.setItem('ae_userName', userName);
+    localStorage.setItem('ae_userRole', role);
+    if (userId) localStorage.setItem('ae_userId', userId);
+    sessionStorage.setItem('userName', userName);
+    sessionStorage.setItem('userRole', role);
+    if (userId) sessionStorage.setItem('userId', userId);
+  } catch(e) {}
+}
+
+/* ════════ URL CACHE ════════ */
+// _urlCache defined above with GitHub Pages paths
+
+/* ════════ SLOW-LOAD WARNING ════════ */
+var _slowTimer = null;
+function _startSlowWarning() {
+  _slowTimer = setTimeout(function() {
+    // Server is taking too long — show friendly message after 8 seconds
+    var sw = document.getElementById('slowWarning');
+    var sub = document.getElementById('spSub');
+    if (sw) sw.style.display = 'flex';
+    if (sub) { sub.textContent = 'INITIALIZING SECURE SESSION…'; sub.style.color = 'rgba(252,211,77,.6)'; }
+  }, 8000);
+}
+function _stopSlowWarning() {
+  clearTimeout(_slowTimer);
+  var sw = document.getElementById('slowWarning');
+  var sub = document.getElementById('spSub');
+  if (sw) sw.style.display = 'none';
+  if (sub) { sub.textContent = 'School Management System'; sub.style.color = ''; }
+}
+
+/* ════════ SPLASH ════════ */
+window.addEventListener('load', function() {
+  _startSlowWarning(); // start 8-second countdown
+  // URLs pre-set for GitHub Pages
+
+  setTimeout(function() {
+    var sp = document.getElementById('splash');
+    sp.classList.add('out');
+    setTimeout(function() {
+      sp.style.display = 'none';
+      _stopSlowWarning(); // server responded — hide warning
+
+      // Check existing session
+      var storedRole = null;
+      try { storedRole = localStorage.getItem('ae_userRole'); } catch(e) {}
+      storedRole = storedRole ? storedRole.toUpperCase().trim() : '';
+      if (storedRole !== 'ADMIN' && storedRole !== 'TEACHER') storedRole = '';
+      var storedUser = null;
+      try { storedUser = localStorage.getItem('ae_userName'); } catch(e) {}
+      storedUser = storedUser ? storedUser.trim() : '';
+
+      if (storedRole && storedUser) {
+        var dest = storedRole === 'ADMIN' ? _urlCache.dashboard : _urlCache.teacher;
+        var destPage = storedRole === 'ADMIN' ? 'dashboard' : 'teacher';
+        if (dest) { window.location.href = dest; return; }
+        else { window.location.href = _urlCache[destPage] || 'index.html'; return; }
+      }
+
+      // Show landing page
+      var lp = document.getElementById('landingPage');
+      lp.style.display = 'flex';
+      lp.style.flexDirection = 'column';
+    }, 500);
+  }, 1500);
+});
+
+/* ════════ SCROLL TO LOGIN ════════ */
+function scrollToLogin() {
+  document.getElementById('loginCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(function(){
+    document.getElementById('tName').focus();
+  }, 600);
+}
+
+/* ════════ ROLE SWITCH ════════ */
+function switchRole(r) {
+  var isTch = r === 'teacher';
+  document.getElementById('teacherForm').style.display = isTch ? 'block' : 'none';
+  document.getElementById('adminForm').style.display   = isTch ? 'none'  : 'block';
+  document.getElementById('tabTeacher').classList.toggle('active',  isTch);
+  document.getElementById('tabAdmin').classList.toggle('active',   !isTch);
+  document.getElementById('loginErr').style.display = 'none';
+}
+
+/* ════════ BUTTON STATE ════════ */
+function setBtnLoading(btnId, loading) {
+  var btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  if (loading) btn.classList.add('loading');
+  else btn.classList.remove('loading');
+}
+
+/* ════════ TEACHER LOGIN ════════ */
+var _teacherSteps = ['Verifying identity', 'Loading your classes', 'Preparing dashboard'];
+function doTeacherLogin() {
+  var u = document.getElementById('tName').value.trim();
+  var p = document.getElementById('tPass').value.trim();
+  if (!u || !p) { showToast('Please fill both fields', 'err'); return; }
+  document.getElementById('loginErr').style.display = 'none';
+  setBtnLoading('tBtn', true);
+
+  _gasGet('login', {username:u, password:p, role:'teacher'}).then(function(res) {
+      if (!res || res.error) {
+        setBtnLoading('tBtn', false);
+        var err = document.getElementById('loginErr');
+        err.style.display = 'block';
+        err.style.animation = 'none'; void err.offsetWidth; err.style.animation = '';
+        return;
+      }
+      var uName = (res.user && res.user.user_name) || 'Teacher'; // user_name = display name, username = login credential
+      var uId   = (res.user && res.user.user_id)  || '';
+      _saveSession(uName, 'TEACHER', uId);
+      showProgress('Signing you in', 'Opening your teaching dashboard…', _teacherSteps, 600);
+      setTimeout(function(){ window.location.href = _urlCache.teacher || 'teacher/teacher.html'; }, 1200);
+    }).catch(function() {
+      setBtnLoading('tBtn', false);
+      document.getElementById('loginErr').style.display = 'block';
+    });
+}
+
+/* ════════ ADMIN LOGIN ════════ */
+var _adminSteps = ['Verifying credentials', 'Loading school data', 'Preparing admin panel'];
+function doAdminLogin() {
+  var e = document.getElementById('aEmail').value.trim();
+  var p = document.getElementById('aPass').value.trim();
+  if (!e || !p) { showToast('Please fill all fields', 'err'); return; }
+  document.getElementById('loginErr').style.display = 'none';
+  setBtnLoading('aBtn', true);
+
+  _gasGet('login', {username:e, password:p, role:'admin'}).then(function(res) {
+      if (!res || res.error) {
+        setBtnLoading('aBtn', false);
+        var err = document.getElementById('loginErr');
+        err.style.display = 'block';
+        err.style.animation = 'none'; void err.offsetWidth; err.style.animation = '';
+        return;
+      }
+      var uName = (res.user && res.user.user_name) || 'Admin'; // user_name = display name, username = login credential
+      var uId   = (res.user && res.user.user_id)   || '';
+      _saveSession(uName, 'ADMIN', uId);
+      showProgress('Signing you in', 'Opening the admin dashboard…', _adminSteps, 600);
+      setTimeout(function(){ window.location.href = _urlCache.dashboard || 'dashboard/dashboard.html'; }, 1200);
+    }).catch(function() {
+      setBtnLoading('aBtn', false);
+      document.getElementById('loginErr').style.display = 'block';
+    });
+}
+
+/* ════════ SCROLL-BASED ANIMATIONS ════════ */
+(function(){
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.style.opacity='1'; e.target.style.transform='none'; }
+    });
+  }, { threshold: 0.08 });
+
+  setTimeout(function(){
+    document.querySelectorAll('.feat-card,.howit-step,.stat-item').forEach(function(el, i){
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(24px)';
+      el.style.transition = 'opacity .5s ease ' + (i * 0.06) + 's, transform .5s ease ' + (i * 0.06) + 's';
+      observer.observe(el);
+    });
+  }, 500);
+})();
+</script>
 </body>
 </html>
