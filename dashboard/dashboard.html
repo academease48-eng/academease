@@ -1461,11 +1461,21 @@ function _gasGet(action, params) {
   });
 }
 function _gasPost(action, data) {
+  var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var timeoutId  = controller ? setTimeout(function() { controller.abort(); }, 90000) : null;
   return fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: action, data: data })
-  }).then(function(r) { return r.json(); });
+    body: JSON.stringify({ action: action, data: data }),
+    signal: controller ? controller.signal : undefined
+  }).then(function(r) {
+    if (timeoutId) clearTimeout(timeoutId);
+    return r.json();
+  }).catch(function(err) {
+    if (timeoutId) clearTimeout(timeoutId);
+    if (err && err.name === 'AbortError') throw new Error('Request timed out — please retry.');
+    throw err;
+  });
 }
 /* page navigation */
 var APPS_SCRIPT_PAGE_URL = 'https://mute-smoke-c8ea.academease48.workers.dev';
@@ -1538,7 +1548,13 @@ function _sessionGet(key) {
   try { return sessionStorage.getItem(key); } catch(e){ return ''; }
 }
 function _sessionClear() {
-  try { localStorage.removeItem('ae_userName'); localStorage.removeItem('ae_userRole'); localStorage.removeItem('ae_userId'); } catch(e){}
+  try {
+    localStorage.removeItem('ae_userName');
+    localStorage.removeItem('ae_userRole');
+    localStorage.removeItem('ae_userId');
+    localStorage.removeItem('ae_displayName');
+    sessionStorage.removeItem('displayName');
+  } catch(e){}
   try { sessionStorage.clear(); } catch(e){}
 }
 
@@ -1565,7 +1581,7 @@ window.addEventListener('load', function() {
     return;
   }
   
-  var name = _sessionGet('userName') || 'Admin';
+  var name = _sessionGet('displayName') || _sessionGet('userName') || 'Admin';
   setUserDisplay(name);
   showLoading('Loading admin dashboard', ['Connecting to school data', 'Loading students & classes', 'Preparing dashboard']);
   // PERF FIX: getAdminBatchData no longer loads MARKS/DISCIPLINE/DELIBERATION.
@@ -1879,7 +1895,7 @@ function renderOverview() {
   var cRows = classes.slice(0,6).map(function(c){
     var teacher = users.find(function(u){ return u.user_id === c.class_teacher_id; }) || {};
     var cnt = students.filter(function(s){ return s.class_id === c.class_id; }).length;
-    return '<tr><td style="font-weight:600">'+esc(c.Name||'N/A')+'</td><td>'+esc(teacher.user_name||'—')+'</td><td><span class="tag blue">'+cnt+'</span></td></tr>';
+    return '<tr><td style="font-weight:600">'+esc(c.Name||'N/A')+'</td><td>'+esc(teacher?(teacher.displayName||teacher.name||teacher.username||teacher.user_name||'—'):'—')+'</td><td><span class="tag blue">'+cnt+'</span></td></tr>';
   }).join('');
   document.getElementById('tbl-recentClasses').innerHTML = cRows || emptyRow(3,'No classes');
   document.getElementById('classCount').textContent = classes.length + ' total';
@@ -1965,9 +1981,9 @@ function renderTeachers() {
     return '<tr>' +
       '<td>'+(offset+i+1)+'</td>' +
       '<td><span class="mono">'+esc(t.user_id||'—')+'</span></td>' +
-      '<td style="font-weight:600">'+esc(t.user_name||'N/A')+'</td>' +
+      '<td style="font-weight:600">'+esc(t.displayName||t.name||t.username||t.user_name||'N/A')+'</td>' +
       '<td><span class="tag blue"><span class="tag-dot"></span>Teacher</span></td>' +
-      '<td><button class="btn-xs blue" onclick="openEditTeacher(\''+esc(t.user_id)+'\')">Edit</button> <button class="btn-xs red" style="margin-left:4px" onclick="confirmDeleteTeacher(\''+esc(t.user_id)+'\',\''+esc(t.user_name||'')+'\')">Delete</button></td>' +
+      '<td><button class="btn-xs blue" onclick="openEditTeacher(\''+esc(t.user_id)+'\')">Edit</button> <button class="btn-xs red" style="margin-left:4px" onclick="confirmDeleteTeacher(\''+esc(t.user_id)+'\',\''+esc(t.displayName||t.name||t.username||t.user_name||'')+'\')">Delete</button></td>' +
     '</tr>';
   }).join('');
   document.getElementById('tbl-teachers').innerHTML = rows || emptyRow(5, _filter.teachers ? 'No matching teachers' : 'No teachers found');
@@ -1976,7 +1992,7 @@ function renderTeachers() {
   var csel = document.getElementById('newClassTeacher');
   var cval = csel.value;
   csel.innerHTML = '<option value="">— No class teacher —</option>' + ((_data.users||[]).filter(function(u){ return String(u.role||'').toUpperCase()==='TEACHER'; }).map(function(t){
-    return '<option value="'+esc(t.user_id)+'"'+(t.user_id===cval?' selected':'')+'>'+esc(t.user_name)+'</option>';
+    return '<option value="'+esc(t.user_id)+'"'+(t.user_id===cval?' selected':'')+'>'+esc(t.displayName||t.name||t.username||t.user_name||t.user_id)+'</option>';
   }).join(''));
 }
 
@@ -1999,7 +2015,7 @@ function renderClasses() {
       '<td>'+(offset+i+1)+'</td>' +
       '<td><span class=\"mono\">'+esc(c.class_id||'—')+'</span></td>' +
       '<td style=\"font-weight:600\">'+esc(c.Name||'N/A')+'</td>' +
-      '<td>'+esc(teacher.user_name||'—')+'</td>' +
+      '<td>'+esc(teacher?(teacher.displayName||teacher.name||teacher.username||teacher.user_name||'—'):'—')+'</td>' +
       '<td><span class=\"tag '+(cnt>0?'blue':'amber')+'\">'+cnt+'</span></td>' +
       '<td><span class=\"tag '+(subjCnt>0?'green':'amber')+'\">'+subjCnt+' subj.</span></td>' +
       '<td>'+
@@ -3123,7 +3139,7 @@ function openManageTeachers(classId) {
   var tcSel = document.getElementById('mtTeacherSel');
   tcSel.innerHTML = '<option value="">Select teacher...</option>' +
     (_data.users||[]).filter(function(u){ return String(u.role||'').toUpperCase()==='TEACHER'; })
-    .map(function(t){ return '<option value="'+esc(t.user_id)+'">'+esc(t.user_name)+'</option>'; })
+    .map(function(t){ return '<option value="'+esc(t.user_id)+'">'+esc(t.displayName||t.name||t.username||t.user_name||t.user_id)+'</option>'; })
     .join('');
 
   document.getElementById('mtDupWarning').style.display = 'none';
@@ -3192,7 +3208,7 @@ function renderMtList() {
 
 function _getTeacherName(tid) {
   var u = (_data.users||[]).find(function(u){ return String(u.user_id)===String(tid); });
-  return u ? u.user_name : tid;
+  return u ? (u.displayName || u.name || u.username || u.user_name || tid) : tid;
 }
 function _getSubjectName(sid) {
   var s = (_data.subjects||[]).find(function(s){ return String(s.subject_id)===String(sid); });
@@ -3209,8 +3225,10 @@ function saveAssignment() {
   var existing = _mt.assignments.find(function(a){ return String(a.subject_id)===String(subjectId); });
   var action   = existing ? 'change' : 'add';
 
+  var assignPayload = { action: action, classId: _mt.classId, subjectId: subjectId, teacherId: teacherId };
+
   setModalSaving('manageTeachers', true);
-  _gasPost('adminManageAssignment',assignPayload).then(function(res){
+  _gasPost('adminManageAssignment', assignPayload).then(function(res){
       setModalSaving('manageTeachers', false);
       if (!res || !res.ok) { showToast(res.error||'Failed', 'err'); return; }
 
@@ -3240,8 +3258,9 @@ function removeAssignment(teacherId, subjectId) {
   var sName = _getSubjectName(subjectId);
   var tName = _getTeacherName(teacherId);
   showConfirm('Remove Assignment', 'Remove '+tName+' from '+sName+' in '+_mt.className+'?', function(){
+    var removePayload = { action: 'remove', classId: _mt.classId, subjectId: subjectId, teacherId: teacherId };
     showLoading('Removing assignment...');
-    _gasPost('adminManageAssignment',removePayload).then(function(res){
+    _gasPost('adminManageAssignment', removePayload).then(function(res){
         hideLoading();
         if (!res||!res.ok){ showToast(res.error||'Failed','err'); return; }
 
@@ -3304,8 +3323,9 @@ function saveTerm() {
   var endDate   = document.getElementById('editTermEnd').value;
   if (!name) { showToast('Term name is required', 'err'); return; }
 
+  var termPayload = { termId: termId, name: name, startDate: startDate, endDate: endDate, isActive: _termActiveState };
   setModalSaving('editTerm', true);
-  _gasPost('adminSaveTerm',termPayload).then(function(res){
+  _gasPost('adminSaveTerm', termPayload).then(function(res){
       setModalSaving('editTerm', false);
       if (!res||!res.ok){ showToast(res.error||'Save failed','err'); return; }
 
@@ -3323,7 +3343,7 @@ function openEditTeacher(userId) {
   if (!t) return;
   document.getElementById('modalTeacherTitle').textContent = '✏️ Edit Teacher';
   document.getElementById('editTeacherId').value = t.user_id;
-  document.getElementById('newTeacherName').value = t.user_name || '';
+  document.getElementById('newTeacherName').value = t.displayName || t.name || t.username || t.user_name || '';
   document.getElementById('newTeacherPwd').value = '';
   document.getElementById('pwdLabel').textContent = 'New Password';
   document.getElementById('pwdHint').textContent = 'Leave blank to keep current password.';
@@ -3339,22 +3359,22 @@ function saveTeacher() {
   if (!id && !pwd) { showToast('Password is required for new teacher', 'err'); return; }
   setModalSaving('addTeacher', true);
   if (id) {
-    _gasPost('adminEditTeacher',{userId:id,userName:uname,password:pwd}).then(function(res){
+    _gasPost('adminEditTeacher',{userId:id,userName:name,password:pwd}).then(function(res){
         setModalSaving('addTeacher', false);
         if (!res.ok) { showToast(res.error||'Save failed','err'); return; }
         var t = (_data.users||[]).find(function(x){ return String(x.user_id) === String(id); });
-        if (t) { t.user_name = name; }
+        if (t) { t.username = name; t.displayName = name; t.user_name = name; }
         closeModal('addTeacher');
         resetTeacherModal();
         renderTeachers(); renderStats();
         showToast('Teacher updated ✓', 'ok');
       })
   } else {
-    _gasPost('adminAddTeacher',{userName:uname,password:pwd}).then(function(res){
+    _gasPost('adminAddTeacher',{userName:name,password:pwd}).then(function(res){
         setModalSaving('addTeacher', false);
         if (!res.ok) { showToast(res.error||'Save failed','err'); return; }
         _data.users = _data.users || [];
-        _data.users.push({ user_id: res.user_id, user_name: res.user_name, role: 'TEACHER' });
+        _data.users.push({ user_id: res.user_id, username: res.username||name, displayName: res.username||name, user_name: res.username||name, role: 'TEACHER' });
         closeModal('addTeacher');
         resetTeacherModal();
         renderTeachers(); renderStats();
@@ -3398,7 +3418,7 @@ function openEditClass(classId) {
   var teachers = (_data.users||[]).filter(function(u){ return String(u.role||'').toUpperCase()==='TEACHER'; });
   var sel = document.getElementById('newClassTeacher');
   sel.innerHTML = '<option value="">— No class teacher —</option>' + teachers.map(function(t){
-    return '<option value="'+esc(t.user_id)+'"'+(String(t.user_id)===String(c.class_teacher_id)?' selected':'')+'>'+esc(t.user_name)+'</option>';
+    return '<option value="'+esc(t.user_id)+'"'+(String(t.user_id)===String(c.class_teacher_id)?' selected':'')+'>'+esc(t.displayName||t.name||t.username||t.user_name||t.user_id)+'</option>';
   }).join('');
   document.getElementById('btnSaveClass').textContent = 'Save Changes';
   openModal('addClass');
@@ -3411,7 +3431,7 @@ function saveClass() {
   if (!name) { showToast('Class name is required', 'err'); return; }
   setModalSaving('addClass', true);
   if (id) {
-    _gasPost('adminEditClass',{classId:id,name:cname,classTeacherId:teacherId}).then(function(res){
+    _gasPost('adminEditClass',{classId:id,name:name,classTeacherId:teacher}).then(function(res){
         setModalSaving('addClass', false);
         if (!res.ok) { showToast(res.error||'Save failed','err'); return; }
         var cls = (_data.classes||[]).find(function(x){ return String(x.class_id) === String(id); });
@@ -3422,7 +3442,7 @@ function saveClass() {
         showToast('Class updated ✓', 'ok');
       })
   } else {
-    _gasPost('adminAddClass',{name:cname,classTeacherId:teacherId}).then(function(res){
+    _gasPost('adminAddClass',{name:name,classTeacherId:teacher}).then(function(res){
         setModalSaving('addClass', false);
         if (!res.ok) { showToast(res.error||'Save failed','err'); return; }
         _data.classes = _data.classes || [];
@@ -3465,7 +3485,13 @@ function confirmDeleteClass(id, name, studentCount) {
 function doLogout() {
   showLoading('Signing out', ['Clearing session', 'Redirecting to login']);
   _sessionClear();
-  try { localStorage.removeItem('ae_userName'); localStorage.removeItem('ae_userRole'); localStorage.removeItem('ae_userId'); } catch(e){}
+  try {
+    localStorage.removeItem('ae_userName');
+    localStorage.removeItem('ae_userRole');
+    localStorage.removeItem('ae_userId');
+    localStorage.removeItem('ae_displayName');
+    sessionStorage.removeItem('displayName');
+  } catch(e){}
   function go(url) { window.top.location.replace(url); }
   if (window._indexUrl) { go(window._indexUrl); }
   else {
