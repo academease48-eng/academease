@@ -6566,6 +6566,8 @@ function p6wOnClassChange() {
   var pp = document.getElementById('p6w-progress-panel');
   if (pp) pp.style.display = 'none';
 
+  var selClass = document.getElementById('p6wClass').value;
+  var selTerm  = document.getElementById('p6wTerm').value;
   _gasGet('adminGetP6WeeklyProgress',{classId:selClass,termId:selTerm}).then(function(res) {
       if (!res || !res.ok) {
         grid.innerHTML = '<div style="grid-column:1/-1;padding:40px 20px;text-align:center;color:#b22222;font-size:13px;font-weight:700">'+esc(res&&res.error||'Error loading data')+'</div>';
@@ -6896,6 +6898,10 @@ function p6wSaveScores() {
   var btn = document.getElementById('p6wBtnSave');
   btn.textContent = '⏳ Saving…'; btn.disabled = true;
 
+  var selClass  = _p6w.classId;
+  var selTerm   = _p6w.termId;
+  var selWeek   = _p6w.weekLabel;
+  var teacherId = _sessionGet('userId') || _sessionGet('userName') || '';
   _gasPost('p6SaveWeeklyMarks',{classId:selClass,weekLabel:selWeek,termId:selTerm,teacherId:teacherId,scores:scores}).then(function(res){
       btn.textContent = '💾 Save Scores';
       if (!res||!res.ok){ showToast(res&&res.error||'Save failed','err'); btn.disabled=false; return; }
