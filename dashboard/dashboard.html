@@ -1026,7 +1026,10 @@
             </div>
             <!-- Week grid -->
             <div style="padding:20px">
-              <div id="p6w-week-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;min-height:80px">
+              <!-- ── DEBUG PANEL (remove after fix confirmed) ── -->
+        <div id="p6w-debug-bar" style="display:none;padding:8px 12px;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:8px;margin-bottom:8px;font-size:11.5px;font-family:monospace;white-space:pre-wrap;word-break:break-all;max-height:180px;overflow-y:auto;color:#1a1a1a"></div>
+        <button onclick="p6wDebugTest()" style="display:none;margin-bottom:8px;padding:6px 14px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer" id="p6wDebugBtn">🔍 Debug: Test Server Call</button>
+        <div id="p6w-week-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;min-height:80px">
                 <div style="grid-column:1/-1;padding:40px 20px;text-align:center;color:var(--faint);font-size:13px;font-weight:600">Select a term and P6 class to see weeks.</div>
               </div>
             </div>
@@ -6508,6 +6511,33 @@ var _p6w = {
 };
 
 /* ── init: called once when tab first opened ── */
+function p6wDebugTest() {
+  var bar = document.getElementById('p6w-debug-bar');
+  bar.style.display = '';
+  bar.textContent = 'Testing...';
+  var classId = document.getElementById('p6wClass').value;
+  var termId  = document.getElementById('p6wTerm').value;
+  bar.textContent = 'Sending: classId=' + classId + ' termId=' + termId + '\n';
+
+  // Test 1: _gasPost
+  _gasPost('adminGetP6WeeklyProgress', {classId: classId, termId: termId})
+    .then(function(res) {
+      bar.textContent += 'POST response:\n' + JSON.stringify(res, null, 2);
+    })
+    .catch(function(err) {
+      bar.textContent += 'POST error: ' + (err && err.message || String(err));
+      // Test 2: fallback _gasGet
+      bar.textContent += '\n\nTrying GET fallback...';
+      _gasGet('adminGetP6WeeklyProgress', {classId: classId, termId: termId})
+        .then(function(res2) {
+          bar.textContent += '\nGET response:\n' + JSON.stringify(res2, null, 2);
+        })
+        .catch(function(err2) {
+          bar.textContent += '\nGET error: ' + (err2 && err2.message || String(err2));
+        });
+    });
+}
+
 function p6wInit() {
   _p6wInited = true;
   var termSel  = document.getElementById('p6wTerm');
@@ -6555,6 +6585,10 @@ function p6wOnClassChange() {
 
   _p6w.classId = classId;
   _p6w.termId  = termId;
+
+  // Show debug button
+  var dbgBtn = document.getElementById('p6wDebugBtn');
+  if (dbgBtn) dbgBtn.style.display = '';
 
   var grid = document.getElementById('p6w-week-grid');
   grid.innerHTML = '<div style="grid-column:1/-1;padding:32px 20px;text-align:center"><div class="spinner" style="margin:0 auto"></div></div>';
