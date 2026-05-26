@@ -2020,22 +2020,25 @@ window.addEventListener('load', function() {
     return;
   }
   
-  // Set user info from session immediately (no round-trip)
-  var name = sessionStorage.getItem('userName') || localStorage.getItem('ae_userName') || 'Teacher';
-  setUserDisplay(name);
+  // displayName (column B: name) → shown in UI greeting, sidebar, profile
+  // username    (column F: username) → used for API calls only
+  var displayName = sessionStorage.getItem('displayName')
+                 || localStorage.getItem('ae_displayName')
+                 || sessionStorage.getItem('userName')
+                 || localStorage.getItem('ae_userName')
+                 || 'Teacher';
+  setUserDisplay(displayName);
 
   // Prefetch index URL for fast logout
   window._indexUrl = '../index.html'; // GitHub Pages
 
   showLoading('Loading your dashboard…', ['Verifying your account', 'Loading classes & subjects', 'Loading marks & discipline', 'Preparing your dashboard']);
 
-  // Defer GAS call by one frame so the progress modal has time to paint before the network call starts
-  // Read from sessionStorage first (set on fresh login), then localStorage fallback (survives reload/new tab)
-  var _loginKey = sessionStorage.getItem('userId')
-               || sessionStorage.getItem('user_id')
-               || localStorage.getItem('ae_userId')
-               || sessionStorage.getItem('userName')
+  // username (column F) is the key used to look up teacher assignments on the server
+  var _loginKey = sessionStorage.getItem('userName')
                || localStorage.getItem('ae_userName')
+               || sessionStorage.getItem('userId')
+               || localStorage.getItem('ae_userId')
                || '';
   setTimeout(function() {
     _gasGet('getTeacherBatchData',{userName:_loginKey}).then(onBatchLoaded).catch(function(){ hideLoading(); showToast('Failed to load data','err'); });
@@ -3377,7 +3380,9 @@ function renderProfile() {
   if (!_data) return;
   // Populate display fields from cached batch data
   var teacherId = _data.teacherId || '';
-  var userName  = sessionStorage.getItem('userName') || localStorage.getItem('ae_userName') || _data.teacherName || 'Teacher';
+  var userName  = sessionStorage.getItem('displayName') || localStorage.getItem('ae_displayName')
+               || sessionStorage.getItem('userName') || localStorage.getItem('ae_userName')
+               || (_data && _data.displayName) || 'Teacher';
 
   document.getElementById('profileName').textContent = userName;
   document.getElementById('profileId').textContent   = teacherId || '—';
@@ -4381,7 +4386,7 @@ function saveDeliberation() {
 function doLogout() {
   showLoading('Signing out…', ['Clearing session', 'Redirecting to login']);
   sessionStorage.clear();
-  try { localStorage.removeItem('ae_userName'); localStorage.removeItem('ae_userRole'); localStorage.removeItem('ae_userId'); } catch(e){}
+  try { localStorage.removeItem('ae_userName'); localStorage.removeItem('ae_userRole'); localStorage.removeItem('ae_userId'); localStorage.removeItem('ae_displayName'); sessionStorage.removeItem('displayName'); } catch(e){}
   function go(url) { window.top.location.replace(url); }
   // Delay navigation so the modal is visible before the page unloads
   setTimeout(function() {
