@@ -6569,25 +6569,34 @@ function p6wOnClassChange() {
 
   var selClass = document.getElementById('p6wClass').value;
   var selTerm  = document.getElementById('p6wTerm').value;
-  _gasGet('adminGetP6WeeklyProgress',{classId:selClass,termId:selTerm}).then(function(res) {
-      console.log('[P6W] adminGetP6WeeklyProgress response:', JSON.stringify(res));
+  console.log('[P6W] Calling adminGetP6WeeklyProgress — classId:', selClass, 'termId:', selTerm);
+
+  _gasPost('adminGetP6WeeklyProgress',{classId:selClass,termId:selTerm}).then(function(res) {
+      console.log('[P6W] Response ok:', res&&res.ok, 'weeks:', res&&res.weeks, 'students:', res&&(res.students||[]).length, 'error:', res&&res.error);
+
       if (!res || !res.ok) {
         var errMsg = (res && res.error) || 'Error loading data';
-        grid.innerHTML = '<div style="grid-column:1/-1;padding:40px 20px;text-align:center;color:#b22222;font-size:13px;font-weight:700">⚠️ '+esc(errMsg)+'</div>';
+        grid.innerHTML = '<div style="grid-column:1/-1;padding:24px 20px;text-align:center;color:#b22222;font-size:13px;font-weight:700">'
+          + '⚠️ ' + esc(errMsg)
+          + '<br><span style="font-size:11px;color:#888;font-weight:500;display:block;margin-top:4px">classId=' + esc(selClass) + '  termId=' + esc(selTerm) + '</span></div>';
         showToast(errMsg, 'err');
         document.getElementById('p6wBtnNewWeek').disabled = false;
         return;
       }
+
       _p6w.students = res.students || [];
       _p6w.subjects = res.subjects || [];
       _p6w.maxScore = res.maxScore || 100;
       _p6w.existing = res.existing || [];
       _p6w.weeks    = res.weeks    || [];
+
       document.getElementById('p6wBtnNewWeek').disabled = false;
       if (pgBtn) pgBtn.style.display = '';
       if (prBtn && _p6w.weeks.length) prBtn.style.display = '';
+
       var allCardsBtn = document.getElementById('p6wBtnDlAllCards');
-      var weekSel = document.getElementById('p6wWeekSelect');
+      var weekSel     = document.getElementById('p6wWeekSelect');
+
       if (_p6w.weeks.length > 0) {
         if (allCardsBtn) allCardsBtn.style.display = '';
         if (weekSel) {
@@ -6595,15 +6604,25 @@ function p6wOnClassChange() {
           weekSel.innerHTML = _p6w.weeks.map(function(wk){
             return '<option value="'+esc(wk)+'">'+esc(wk)+'</option>';
           }).join('');
-          // Default to last week
-          weekSel.value = _p6w.weeks[_p6w.weeks.length - 1];
+          weekSel.value  = _p6w.weeks[_p6w.weeks.length - 1];
           _p6w.weekLabel = weekSel.value;
         }
+        p6wRenderPicker();
+      } else {
+        // No weeks yet — show clear message with student count so admin knows data loaded OK
+        grid.innerHTML = '<div style="grid-column:1/-1;padding:40px 20px;text-align:center">'
+          + '<div style="font-size:28px;margin-bottom:8px">📅</div>'
+          + '<div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:4px">No weeks created yet</div>'
+          + '<div style="font-size:12px;color:var(--muted);font-weight:500">'
+          + esc(_p6w.students.length) + ' students loaded — click ➕ New Week to start</div></div>';
       }
-      p6wRenderPicker();
-    })
+    }).catch(function(err) {
+      console.error('[P6W] Fetch/parse error:', err);
+      grid.innerHTML = '<div style="grid-column:1/-1;padding:24px;text-align:center;color:#b22222;font-size:13px;font-weight:700">'
+        + '⚠️ Network error: ' + esc(err&&err.message||String(err)) + '</div>';
+      document.getElementById('p6wBtnNewWeek').disabled = false;
+    });
 }
-
 /* ── Week selector change — update weekLabel for PDF downloads ── */
 function p6wOnWeekSelectChange(wk) {
   _p6w.weekLabel = wk;
@@ -6649,7 +6668,7 @@ function p6wLoadProgress() {
   if (!body) return;
   if (!_p6w.classId || !_p6w.termId) { body.innerHTML = '<div style="color:var(--muted);font-size:12px">Select a class and term first.</div>'; return; }
   body.innerHTML = '<div class="spinner" style="margin:8px auto"></div>';
-_gasGet('adminGetP6WeeklyReport',{classId:_p6w.classId,termId:_p6w.termId}).then(function(res) {
+_gasPost('adminGetP6WeeklyReport',{classId:_p6w.classId,termId:_p6w.termId}).then(function(res) {
       if (!res || !res.ok) { body.innerHTML = '<div style="color:#b22222;font-size:12px">'+esc(res&&res.error||'Error')+'</div>'; return; }
       if (!res.weeks || !res.weeks.length) { body.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px 0">No weeks created yet.</div>'; return; }
 
