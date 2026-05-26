@@ -6529,9 +6529,10 @@ function p6wOnTermChange() {
   var classSel = document.getElementById('p6wClass');
   var termId   = document.getElementById('p6wTerm').value;
   var classes  = (_data && _data.classes) || [];
-  var p6       = classes.filter(function(c){ return /\bP6\b/i.test(String(c.Name||'')); });
+  // Show all classes (not just /P6/ regex) so any class name works
+  var p6 = classes;
 
-  classSel.innerHTML = '<option value="">Select P6 class...</option>'
+  classSel.innerHTML = '<option value="">Select class...</option>'
     + p6.map(function(c){ return '<option value="'+esc(c.class_id)+'">'+esc(c.Name)+'</option>'; }).join('');
 
   _p6w.classId = ''; _p6w.termId = termId;
@@ -6541,7 +6542,7 @@ function p6wOnTermChange() {
   if (pgBtn) pgBtn.style.display = 'none';
   if (prBtn) prBtn.style.display = 'none';
   document.getElementById('p6w-week-grid').innerHTML =
-    '<div style="grid-column:1/-1;padding:40px 20px;text-align:center;color:var(--faint);font-size:13px;font-weight:600">Select a P6 class to see weeks.</div>';
+    '<div style="grid-column:1/-1;padding:40px 20px;text-align:center;color:var(--faint);font-size:13px;font-weight:600">Select a class to see weeks.</div>';
 
   if (p6.length === 1) { classSel.value = p6[0].class_id; p6wOnClassChange(); }
 }
@@ -6569,8 +6570,12 @@ function p6wOnClassChange() {
   var selClass = document.getElementById('p6wClass').value;
   var selTerm  = document.getElementById('p6wTerm').value;
   _gasGet('adminGetP6WeeklyProgress',{classId:selClass,termId:selTerm}).then(function(res) {
+      console.log('[P6W] adminGetP6WeeklyProgress response:', JSON.stringify(res));
       if (!res || !res.ok) {
-        grid.innerHTML = '<div style="grid-column:1/-1;padding:40px 20px;text-align:center;color:#b22222;font-size:13px;font-weight:700">'+esc(res&&res.error||'Error loading data')+'</div>';
+        var errMsg = (res && res.error) || 'Error loading data';
+        grid.innerHTML = '<div style="grid-column:1/-1;padding:40px 20px;text-align:center;color:#b22222;font-size:13px;font-weight:700">⚠️ '+esc(errMsg)+'</div>';
+        showToast(errMsg, 'err');
+        document.getElementById('p6wBtnNewWeek').disabled = false;
         return;
       }
       _p6w.students = res.students || [];
