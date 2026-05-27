@@ -313,54 +313,143 @@
 
 
     /* ── MARKS DETAILS MODAL ── */
-    .mdet-overlay{display:none;position:fixed;inset:0;background:rgba(17,24,39,.5);backdrop-filter:blur(4px);z-index:9200;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
-    .mdet-overlay.open{display:flex;animation:fadeIn .2s ease}
-    .mdet-modal{background:var(--white);border-radius:var(--r16);width:100%;max-width:640px;box-shadow:0 24px 64px rgba(0,0,0,.2);border:1px solid var(--line);overflow:hidden;margin:auto}
+
+    /* ══════════════════════════════════
+       PROGRESS CARD-GRID LAYOUT
+    ══════════════════════════════════ */
+
+    /* ── Top stats row ── */
+    .mpg-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+    .mpg-stat-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r12);padding:16px 18px;box-shadow:var(--sh-sm)}
+    .mpg-stat-val{font-size:26px;font-weight:900;letter-spacing:-1.5px;line-height:1.1}
+    .mpg-stat-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:3px}
+
+    /* ── Class selector row ── */
+    .mpg-class-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+    .mpg-class-select-wrap{position:relative;display:inline-flex;align-items:center}
+    .mpg-class-select{appearance:none;-webkit-appearance:none;background:var(--blue);color:#fff;border:none;border-radius:var(--r8);padding:9px 36px 9px 14px;font-size:13px;font-weight:800;font-family:var(--font);cursor:pointer;outline:none;letter-spacing:.2px;box-shadow:0 2px 8px rgba(37,99,235,.25)}
+    .mpg-class-select option{background:var(--white);color:var(--ink);font-weight:700}
+    .mpg-class-select-arrow{position:absolute;right:11px;pointer-events:none;color:#fff;font-size:13px;line-height:1}
+    .mpg-class-meta{font-size:12.5px;color:var(--muted);font-weight:600}
+
+    /* ── Cards grid ── */
+    .mpg-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    @media(max-width:1100px){.mpg-cards{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:680px){.mpg-cards{grid-template-columns:1fr}}
+
+    /* ── Individual subject card ── */
+    .mpg-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r16);padding:18px 18px 14px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;gap:0;transition:box-shadow .15s,border-color .15s;position:relative;overflow:hidden}
+    .mpg-card:hover{box-shadow:var(--sh-md);border-color:var(--blue-m)}
+    .mpg-card-accent{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r16) var(--r16) 0 0}
+    .mpg-card-accent.full{background:linear-gradient(90deg,var(--green),#34d399)}
+    .mpg-card-accent.partial{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+    .mpg-card-accent.none{background:var(--line)}
+    .mpg-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:8px}
+    .mpg-card-title{font-size:14px;font-weight:800;color:var(--ink);line-height:1.25;letter-spacing:-.2px}
+    .mpg-card-eye{background:none;border:none;cursor:pointer;font-size:18px;color:var(--blue);padding:0;line-height:1;opacity:.7;transition:opacity .12s;flex-shrink:0;font-family:"Material Symbols Rounded"}
+    .mpg-card-eye:hover{opacity:1}
+    .mpg-card-meta{font-size:11.5px;color:var(--muted);font-weight:500;margin-bottom:14px;line-height:1.4}
+    .mpg-card-meta strong{color:var(--ink);font-weight:700}
+    .mpg-card-rows{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+    .mpg-card-row{display:flex;flex-direction:column;gap:4px}
+    .mpg-card-row-top{display:flex;align-items:center;justify-content:space-between}
+    .mpg-card-row-label{font-size:12.5px;font-weight:700;color:var(--ink2)}
+    .mpg-card-row-pct{font-size:12.5px;font-weight:800;color:var(--muted)}
+    .mpg-card-row-pct.full{color:var(--green)}
+    .mpg-card-row-pct.partial{color:var(--amber)}
+    .mpg-card-row-pct.zero{color:var(--red)}
+    .mpg-card-row-pct.na{color:var(--faint);font-weight:600;font-style:italic}
+    .mpg-card-bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+    .mpg-card-bar-fill{height:100%;border-radius:3px;transition:width .35s cubic-bezier(.4,0,.2,1)}
+    .mpg-card-bar-fill.full{background:linear-gradient(90deg,var(--green),#34d399)}
+    .mpg-card-bar-fill.partial{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+    .mpg-card-bar-fill.zero{background:var(--red)}
+    .mpg-card-bar-fill.na{background:transparent}
+    .mpg-card-footer{border-top:1px solid var(--line);padding-top:11px;display:flex;justify-content:center}
+    .mpg-show-details{background:none;border:none;font-size:12.5px;font-weight:700;color:var(--blue);cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:var(--r6);transition:background .12s}
+    .mpg-show-details:hover{background:var(--blue-l)}
+    .mpg-show-details svg{transition:transform .15s}
+    .mpg-show-details:hover svg{transform:translateY(2px)}
+
+    /* ── CARD SUBPART EXPAND (inline on card) ── */
+    .mpg-subparts{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}
+    .mpg-sp-row{background:var(--bg);border-radius:var(--r8);padding:8px 10px;display:flex;flex-direction:column;gap:4px}
+    .mpg-sp-name{font-size:11.5px;font-weight:800;color:var(--blue);margin-bottom:2px}
+    .mpg-sp-assess{display:flex;flex-direction:column;gap:4px}
+    .mpg-sp-line{display:flex;align-items:center;gap:6px}
+    .mpg-sp-lbl{font-size:11px;font-weight:700;color:var(--ink2);min-width:46px}
+    .mpg-sp-bar{flex:1;height:5px;background:var(--line);border-radius:3px;overflow:hidden}
+    .mpg-sp-bar-fill{height:100%;border-radius:3px}
+    .mpg-sp-bar-fill.full{background:var(--green)}
+    .mpg-sp-bar-fill.partial{background:var(--amber)}
+    .mpg-sp-bar-fill.zero{background:var(--red)}
+    .mpg-sp-pct{font-size:11px;font-weight:800;min-width:34px;text-align:right}
+    .mpg-sp-pct.full{color:var(--green)} .mpg-sp-pct.partial{color:var(--amber)} .mpg-sp-pct.zero{color:var(--red)} .mpg-sp-pct.na{color:var(--faint);font-style:italic;font-weight:600}
+    .mpg-sp-status{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:99px;white-space:nowrap;flex-shrink:0}
+    .mpg-sp-status.open{background:var(--green-l);color:var(--green)}
+    .mpg-sp-status.closed{background:#f3f4f6;color:var(--faint)}
+
+    /* ── MDET MODAL — full redesign ── */
+    .mdet-overlay{display:none;position:fixed;inset:0;background:rgba(17,24,39,.55);backdrop-filter:blur(4px);z-index:9200;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto}
+    .mdet-overlay.open{display:flex;animation:fadeIn .18s ease}
+    .mdet-modal{background:var(--white);border-radius:var(--r16);width:100%;max-width:780px;box-shadow:0 24px 64px rgba(0,0,0,.22),0 4px 16px rgba(37,99,235,.12);border:1px solid var(--line);overflow:hidden;margin:auto}
     .mdet-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);background:linear-gradient(to right,var(--blue-l),#fff)}
     .mdet-title{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-.2px}
     .mdet-close{width:30px;height:30px;border:none;background:transparent;border-radius:var(--r8);cursor:pointer;font-size:17px;display:grid;place-items:center;color:var(--muted);transition:all .15s;flex-shrink:0}
     .mdet-close:hover{background:var(--red-l);color:var(--red)}
-    .mdet-meta{display:flex;align-items:center;gap:10px;padding:10px 20px;background:#f8faff;border-bottom:1px solid var(--line);flex-wrap:wrap}
-    .mdet-meta-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700}
+    .mdet-meta{display:flex;align-items:center;gap:8px;padding:10px 20px;background:#f8faff;border-bottom:1px solid var(--line);flex-wrap:wrap}
+    .mdet-meta-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700}
     .mdet-meta-chip.green{background:var(--green-l);color:var(--green);border:1px solid var(--green-m)}
     .mdet-meta-chip.amber{background:var(--amber-l);color:var(--amber);border:1px solid #fde68a}
     .mdet-meta-chip.red{background:var(--red-l);color:var(--red);border:1px solid var(--red-m)}
     .mdet-meta-chip.blue{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-m)}
-    .mdet-section-label{font-size:10px;font-weight:800;color:var(--faint);text-transform:uppercase;letter-spacing:.8px;padding:10px 20px 6px}
-    .mdet-list{max-height:320px;overflow-y:auto;border-bottom:1px solid var(--line)}
-    .mdet-row{display:flex;align-items:center;gap:10px;padding:9px 20px;border-bottom:1px solid var(--line);transition:background .1s}
+    .mdet-sp-tabs{display:flex;gap:0;border-bottom:2px solid var(--line);background:#f8faff;overflow-x:auto;padding:0 16px}
+    .mdet-sp-tab{padding:10px 14px;border:none;background:transparent;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;font-family:var(--font);border-bottom:2.5px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .12s;display:flex;align-items:center;gap:5px}
+    .mdet-sp-tab:hover{color:var(--blue)}
+    .mdet-sp-tab.active{color:var(--blue);border-bottom-color:var(--blue);background:var(--white)}
+    .mdet-sp-tab .sp-pct-pill{font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:99px}
+    .mdet-sp-tab .sp-pct-pill.full{background:var(--green-l);color:var(--green)}
+    .mdet-sp-tab .sp-pct-pill.partial{background:var(--amber-l);color:var(--amber)}
+    .mdet-sp-tab .sp-pct-pill.zero{background:var(--red-l);color:var(--red)}
+    .mdet-assess-tabs{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--white);flex-wrap:wrap;align-items:center}
+    .mdet-assess-tab{padding:5px 12px;border-radius:99px;border:1.5px solid var(--line);background:var(--white);font-size:11.5px;font-weight:700;color:var(--muted);cursor:pointer;font-family:var(--font);transition:all .13s;white-space:nowrap}
+    .mdet-assess-tab:hover{border-color:var(--blue-m);color:var(--blue)}
+    .mdet-assess-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .mdet-assess-tab.na{opacity:.45;cursor:default}
+    .mdet-assess-tab .at-pct{font-size:10px;font-weight:900;opacity:.85}
+    .mdet-filter-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:#fafbff}
+    .mdet-search{position:relative;flex:1;max-width:220px}
+    .mdet-search input{width:100%;padding:7px 10px 7px 30px;border:1.5px solid var(--line);border-radius:var(--r8);font-size:12.5px;font-family:var(--font);outline:none;background:var(--white);color:var(--ink)}
+    .mdet-search input:focus{border-color:var(--blue)}
+    .mdet-search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+    .mdet-view-chip{padding:4px 11px;border-radius:99px;border:1.5px solid var(--line);background:var(--white);font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;font-family:var(--font);transition:all .12s}
+    .mdet-view-chip.active.missing{background:var(--amber-l);color:var(--amber);border-color:#fde68a}
+    .mdet-view-chip.active.all{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .mdet-view-chip.active.entered{background:var(--green-l);color:var(--green);border-color:var(--green-m)}
+    .mdet-view-chip.active.left{background:var(--red-l);color:var(--red);border-color:var(--red-m)}
+    .mdet-list{max-height:340px;overflow-y:auto;border-bottom:1px solid var(--line)}
+    .mdet-row{display:grid;grid-template-columns:28px 1fr auto auto auto;align-items:center;gap:8px;padding:9px 18px;border-bottom:1px solid var(--line);transition:background .1s}
     .mdet-row:last-child{border-bottom:none}
     .mdet-row:hover{background:var(--bg)}
     .mdet-row.left-row{background:#fffbeb}
     .mdet-row.left-row:hover{background:#fef9e7}
-    .mdet-num{font-size:11px;font-weight:700;color:var(--faint);min-width:22px}
-    .mdet-name{flex:1;font-size:13px;font-weight:600;color:var(--ink)}
-    .mdet-score{font-size:11.5px;font-weight:700;color:var(--muted);min-width:80px;text-align:right}
-    .mdet-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:700}
+    .mdet-num{font-size:11px;font-weight:700;color:var(--faint);text-align:right}
+    .mdet-name{font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mdet-score{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+    .mdet-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap}
     .mdet-tag.has-marks{background:var(--green-l);color:var(--green)}
     .mdet-tag.no-marks{background:var(--amber-l);color:var(--amber)}
-    .mdet-tag.left{background:#fef2f2;color:#dc2626}
-    .mdet-left-btn{padding:4px 10px;border-radius:99px;font-size:10.5px;font-weight:700;cursor:pointer;border:1.5px solid;font-family:var(--font);transition:all .15s;white-space:nowrap;flex-shrink:0}
-    .mdet-left-btn.mark-left{background:#fffbeb;color:#d97706;border-color:#fde68a}
-    .mdet-left-btn.mark-left:hover{background:#d97706;color:#fff;border-color:#d97706}
-    .mdet-left-btn.restore{background:#fef2f2;color:#dc2626;border-color:#fca5a5}
-    .mdet-left-btn.restore:hover{background:#dc2626;color:#fff;border-color:#dc2626}
-    .mdet-footer{padding:12px 20px;display:flex;justify-content:flex-end;background:#f8faff}
-    .mdet-search{flex:1;max-width:240px;position:relative}
-    .mdet-search input{width:100%;padding:7px 10px 7px 30px;border:1.5px solid var(--line);border-radius:var(--r8);font-size:12.5px;font-family:var(--font);outline:none;background:var(--bg);color:var(--ink)}
-    .mdet-search input:focus{border-color:var(--blue);background:var(--white)}
-    .mdet-search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+    .mdet-tag.left{background:var(--red-l);color:var(--red)}
+    .mdet-left-btn{padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;cursor:pointer;border:1.5px solid;font-family:var(--font);transition:all .13s;white-space:nowrap;flex-shrink:0}
+    .mdet-left-btn.mark-left{background:var(--amber-l);color:var(--amber);border-color:#fde68a}
+    .mdet-left-btn.mark-left:hover{background:var(--amber);color:#fff;border-color:var(--amber)}
+    .mdet-left-btn.restore{background:var(--red-l);color:var(--red);border-color:var(--red-m)}
+    .mdet-left-btn.restore:hover{background:var(--red);color:#fff;border-color:var(--red)}
+    .mdet-footer{padding:12px 20px;display:flex;justify-content:space-between;align-items:center;background:#f8faff;gap:10px;flex-wrap:wrap}
+    .mdet-footer-info{font-size:11.5px;color:var(--muted);font-weight:600}
 
-    /* ── MDET OPEN BUTTON (Details btn in progress rows) ── */
-    .mdet-open-btn{
-      display:inline-flex;align-items:center;gap:5px;
-      padding:5px 13px;border-radius:var(--r8);
-      background:var(--blue-l);color:var(--blue);
-      border:1.5px solid var(--blue-m);
-      font-size:11.5px;font-weight:700;cursor:pointer;
-      font-family:var(--font);transition:all .15s;
-      white-space:nowrap;flex-shrink:0;margin-left:auto;
-    }
+    /* ── MDET OPEN BUTTON ── */
+    .mdet-open-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:var(--r8);background:var(--blue-l);color:var(--blue);border:1.5px solid var(--blue-m);font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap;flex-shrink:0;margin-left:auto}
     .mdet-open-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 2px 8px rgba(37,99,235,.25)}
 
     /* ── MOBILE BOTTOM NAV ── */
@@ -3012,15 +3101,17 @@ function saveStudentStatus() {
 
       closeModal('studentStatus');
       renderStudents();
-      // Refresh mdet if open
-      if (_mdetState && _mdetState.rows) {
-        var mrow = _mdetState.rows.find(function(r){ return String(r.studentId) === String(studentId); });
-        if (mrow) {
-          mrow.leftTerms = _ssState.leftTerms.slice();
-          mrow.isLeft = _ssState.leftTerms.indexOf(_mdetState.termId) !== -1;
-          mrow.left_terms = newLeftStr;
-          _mdetRefresh();
-        }
+      // Refresh mdet modal if open — update student across all subparts
+      if (_mdetState && _mdetState.subpartData) {
+        (_mdetState.subpartData).forEach(function(sp) {
+          sp.students.forEach(function(mrow) {
+            if (String(mrow.studentId) !== String(studentId)) return;
+            mrow.leftTerms = _ssState.leftTerms.slice();
+            mrow.isLeft    = _ssState.leftTerms.indexOf(_mdetState.termId) !== -1;
+            mrow.left_terms = newLeftStr;
+          });
+        });
+        _mdetRebuild();
       }
       showToast('Student status saved ✓', 'ok');
     });
@@ -3821,7 +3912,7 @@ function renderMarksControl() {
   });
 }
 
-/* ════════════ ENTRY PROGRESS RENDER (same hierarchy) ════════════ */
+/* ════════════ ENTRY PROGRESS — card-grid layout ════════════ */
 function renderMarksProgress() {
   var wrap = document.getElementById('progressCardsWrap');
   if (!_marksHierarchy.length) {
@@ -3829,26 +3920,140 @@ function renderMarksProgress() {
     return;
   }
 
-  var html = '<div class="marks-hierarchy" id="progressHierarchy">';
-  _marksHierarchy.forEach(function(classObj) {
-    html += renderClassGroup(classObj, 'progress');
-  });
-  html += '</div>';
-  wrap.innerHTML = html;
+  if (!window._mpgClass) window._mpgClass = _marksHierarchy[0] ? _marksHierarchy[0].classId : '';
+  var selClassId = window._mpgClass;
+  var selClass   = _marksHierarchy.find(function(c){ return c.classId === selClassId; }) || _marksHierarchy[0];
+  if (!selClass) { wrap.innerHTML = ''; return; }
 
-  // Attach toggle listeners
-  wrap.querySelectorAll('.class-header').forEach(function(el) {
-    el.addEventListener('click', function() { toggleClassExpand(el.dataset.classId, 'progress'); });
-  });
-  wrap.querySelectorAll('.subject-row').forEach(function(el) {
-    el.addEventListener('click', function(e) {
-      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
-      toggleSubjectExpand(el.dataset.classId, el.dataset.subjectKey, 'progress');
+  var gFilled=0, gTotal=0, gClasses=_marksHierarchy.length;
+  _marksHierarchy.forEach(function(cls){
+    cls.subjects.forEach(function(subj){
+      var t=(cls.activePerTerm&&cls.activePerTerm[subj.termId]!==undefined)?cls.activePerTerm[subj.termId]:cls.totalStudents;
+      subj.subparts.forEach(function(sp){
+        ['test1','test2','exam'].forEach(function(f){
+          if(sp[f+'_max']!==''&&sp[f+'_max']!==null&&sp[f+'_max']!==undefined&&Number(sp[f+'_max'])>0){
+            gFilled+=sp[f+'_filled']||0; gTotal+=t;
+          }
+        });
+      });
     });
   });
+  var gPct = gTotal ? Math.min(100,Math.round((gFilled/gTotal)*100)) : 0;
+  var gPctClr = gPct===100?'var(--green)':gPct>0?'var(--amber)':'var(--faint)';
+
+  var html = '';
+  html += '<div class="mpg-stats">'
+    + '<div class="mpg-stat-card"><div class="mpg-stat-val" style="color:'+gPctClr+'">'+gPct+'%</div><div class="mpg-stat-lbl">Overall Entry</div></div>'
+    + '<div class="mpg-stat-card"><div class="mpg-stat-val" style="color:var(--blue)">'+gFilled+'</div><div class="mpg-stat-lbl">Marks Entered</div></div>'
+    + '<div class="mpg-stat-card"><div class="mpg-stat-val" style="color:var(--ink)">'+gTotal+'</div><div class="mpg-stat-lbl">Slots Expected</div></div>'
+    + '<div class="mpg-stat-card"><div class="mpg-stat-val" style="color:var(--purple)">'+gClasses+'</div><div class="mpg-stat-lbl">Classes</div></div>'
+    + '</div>';
+
+  var opts = _marksHierarchy.map(function(c){
+    return '<option value="'+esc(c.classId)+'"'+(c.classId===selClass.classId?' selected':'')+'>'+esc(c.className)+'</option>';
+  }).join('');
+  html += '<div class="mpg-class-bar">'
+    + '<div class="mpg-class-select-wrap">'
+    + '<select class="mpg-class-select" onchange="window._mpgClass=this.value;renderMarksProgress()">'+opts+'</select>'
+    + '<span class="mpg-class-select-arrow">▾</span>'
+    + '</div>'
+    + '<span class="mpg-class-meta">'+selClass.totalStudents+' students · '+selClass.subjects.length+' subject(s)</span>'
+    + '</div>';
+
+  html += '<div class="mpg-cards">';
+  selClass.subjects.forEach(function(subjObj){
+    var total = (selClass.activePerTerm&&selClass.activePerTerm[subjObj.termId]!==undefined)?selClass.activePerTerm[subjObj.termId]:selClass.totalStudents;
+    var agg = { test1:{filled:0,total:0,na:true,st:''}, test2:{filled:0,total:0,na:true,st:''}, exam:{filled:0,total:0,na:true,st:''} };
+    var rowFilled=0, rowTotal=0;
+    subjObj.subparts.forEach(function(sp){
+      ['test1','test2','exam'].forEach(function(f){
+        var mx=sp[f+'_max'];
+        if(mx!==''&&mx!==null&&mx!==undefined&&Number(mx)>0){
+          agg[f].filled+=sp[f+'_filled']||0; agg[f].total+=total; agg[f].na=false;
+          rowFilled+=sp[f+'_filled']||0; rowTotal+=total;
+        }
+        var st=(sp[f+'_status']||'CLOSED').toUpperCase();
+        if(agg[f].st==='OPEN'||st==='OPEN') agg[f].st='OPEN'; else agg[f].st=agg[f].st||st;
+      });
+    });
+    var overallPct = rowTotal ? Math.min(100,Math.round((rowFilled/rowTotal)*100)) : 0;
+    var accentCls  = rowTotal===0?'none':overallPct===100?'full':overallPct>0?'partial':'none';
+    var teacherName = subjObj.teacherName || '';
+    var cardTitle   = teacherName ? esc(subjObj.subjectName)+' | '+esc(teacherName) : esc(subjObj.subjectName);
+    var metaParts   = subjObj.subparts.length > 1 ? subjObj.subparts.length+' parts · ' : '';
+    var metaStr     = metaParts + esc(subjObj.termName||'');
+    var cid2    = esc(selClass.classId||'');
+    var sid2    = esc(subjObj.subjectId||'');
+    var termId2 = esc(subjObj.termId||'');
+    var sname2  = esc(subjObj.subjectName||'').replace(/'/g,"&#39;");
+    var cardKey = 'mpgsp_'+selClass.classId+'_'+subjObj.subjectId+'_'+subjObj.termId;
+
+    html += '<div class="mpg-card" id="'+esc(cardKey)+'">'
+      + '<div class="mpg-card-accent '+accentCls+'"></div>'
+      + '<div class="mpg-card-head">'
+      + '<span class="mpg-card-title">'+cardTitle+'</span>'
+      + '<button class="mpg-card-eye" title="View students" onclick="openMdetFull(\''+cid2+'\',\''+sid2+'\',\''+termId2+'\',\''+sname2+'\')">visibility</button>'
+      + '</div>'
+      + '<div class="mpg-card-meta">'+metaStr+'</div>'
+      + '<div class="mpg-card-rows">';
+
+    [{key:'test1',label:'Test 1'},{key:'test2',label:'Test 2'},{key:'exam',label:'Exam'}].forEach(function(a){
+      var d   = agg[a.key];
+      var pct = d.total ? Math.min(100,Math.round((d.filled/d.total)*100)) : 0;
+      var barCls, pctLabel, pctCls;
+      if(d.na){ barCls='na'; pctLabel='Not assigned'; pctCls='na'; }
+      else if(pct===100){ barCls='full'; pctLabel=pct+'%'; pctCls='full'; }
+      else if(pct>0){ barCls='partial'; pctLabel=pct+'%'; pctCls='partial'; }
+      else { barCls='zero'; pctLabel='0%'; pctCls='zero'; }
+      html += '<div class="mpg-card-row">'
+        + '<div class="mpg-card-row-top">'
+        + '<span class="mpg-card-row-label">'+a.label+'</span>'
+        + '<span class="mpg-card-row-pct '+pctCls+'">'+pctLabel+'</span>'
+        + '</div>'
+        + '<div class="mpg-card-bar"><div class="mpg-card-bar-fill '+barCls+'" style="width:'+(d.na?0:pct)+'%"></div></div>'
+        + '</div>';
+    });
+
+    html += '</div>';
+
+    /* Inline subpart expand */
+    html += '<div class="mpg-subparts" id="'+esc(cardKey)+'_sp" style="display:none">';
+    subjObj.subparts.forEach(function(sp){
+      html += '<div class="mpg-sp-row"><div class="mpg-sp-name">'
+        + (subjObj.subparts.length > 1 ? '📎 '+esc(sp.subpartName) : '📎 Entry Breakdown')
+        + '</div><div class="mpg-sp-assess">';
+      var total2 = (selClass.activePerTerm&&selClass.activePerTerm[subjObj.termId]!==undefined)?selClass.activePerTerm[subjObj.termId]:selClass.totalStudents;
+      [{f:'test1',l:'Test 1'},{f:'test2',l:'Test 2'},{f:'exam',l:'Exam'}].forEach(function(a){
+        var mx = sp[a.f+'_max'];
+        var hasMax = mx!==''&&mx!==null&&mx!==undefined&&Number(mx)>0;
+        var filled = sp[a.f+'_filled']||0;
+        var pct2 = hasMax&&total2 ? Math.min(100,Math.round((filled/total2)*100)) : 0;
+        var cls2 = !hasMax?'na':pct2===100?'full':pct2>0?'partial':'zero';
+        var st2  = (sp[a.f+'_status']||'CLOSED').toUpperCase();
+        html += '<div class="mpg-sp-line">'
+          + '<span class="mpg-sp-lbl">'+a.l+'</span>'
+          + '<div class="mpg-sp-bar"><div class="mpg-sp-bar-fill '+cls2+'" style="width:'+(hasMax?pct2:0)+'%"></div></div>'
+          + '<span class="mpg-sp-pct '+cls2+'">'+(hasMax ? pct2+'%' : 'N/A')+'</span>'
+          + (hasMax ? '<span class="mpg-sp-status '+(st2==='OPEN'?'open':'closed')+'">'+(st2==='OPEN'?'● Open':'Closed')+'</span>' : '')
+          + '</div>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div>';
+
+    html += '<div class="mpg-card-footer">'
+      + '<button class="mpg-show-details" onclick="mpgToggleSubparts(\''+esc(cardKey)+'\')" id="'+esc(cardKey)+'_btn">'
+      + '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+      + ' Show Details</button>'
+      + '</div>'
+      + '</div>';
+  });
+
+  html += '</div>';
+  wrap.innerHTML = html;
 }
 
-/* ── Shared class group renderer — mode = 'control' | 'progress' ── */
+/* ════════════ TAB SWITCHING ════════════ */
 function renderClassGroup(classObj, mode) {
   var cid    = classObj.classId;
   var isExp  = _marksExpanded[cid] && _marksExpanded[cid]._classOpen;
@@ -5489,235 +5694,275 @@ async function rcDownloadAnnualProcPDF() {
 
 
 /* ══════════════════════════════════════════════════════════════
-   MARKS ENTRY DETAILS MODAL
-   Opens from the "Details" button in the Entry Progress tab.
-   Shows each student in the class with:
-   • ✅ green  — has at least one score entered for this subpart+term
-   • ⚠️ amber  — no score entered (and not marked as left)
-   • 🚪 red    — marked as Left this term
-   Admins can toggle "Mark as Left" / "Restore" for any student.
-   Fast: all data already in _data.marks + _data.students.
+   MARKS ENTRY DETAILS MODAL — card-grid + subpart tabs
 ═══════════════════════════════════════════════════════════════ */
-var _mdetState = {
-  classId: '', subjectId: '', subpartId: '', termId: '',
-  subjectName: '', subpartName: '',
-  rows: [],    // [{studentId, name, hasMarks, isLeft, scores:{t1,t2,exam}}]
-  tab: 'all',  // 'all' | 'missing' | 'left'
-  search: ''
-};
+var _mdetState = {};
 
-function openProgressDetails(cid, sid, spId, termId, subjName, spName) {
-  var students = (_data.students || []).filter(function(s){ return String(s.class_id) === String(cid); });
-  var marks    = (_data.marks || []);
+/* ══ Card: toggle inline subpart breakdown ══ */
+function mpgToggleSubparts(cardKey) {
+  var spEl  = document.getElementById(cardKey + '_sp');
+  var btnEl = document.getElementById(cardKey + '_btn');
+  if (!spEl) return;
+  var open = spEl.style.display !== 'none';
+  spEl.style.display = open ? 'none' : '';
+  if (btnEl) btnEl.innerHTML = open
+    ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Show Details'
+    : '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Hide Details';
+}
 
-  // Build term order for joined_term comparison
-  var allTerms  = _data.terms || [];
-  var termOrder = {};
-  allTerms.forEach(function(t, i) { termOrder[String(t.term_id).trim()] = i; });
+/* ══ View button → full student modal ══ */
+function openMdetFull(cid, sid, termId, subjName) {
+  var classObj = (_marksHierarchy||[]).find(function(c){ return String(c.classId)===String(cid); });
+  if (!classObj) return;
+  var subjObj  = (classObj.subjects||[]).find(function(s){ return String(s.subjectId)===String(sid) && String(s.termId)===String(termId); });
+  if (!subjObj) return;
 
-  // Build per-student entry status
-  var rows = students.map(function(stu) {
-    var stuId = String(stu.student_id);
-    var ltStr = String(stu.left_terms || '').trim();
-    var leftTerms = ltStr ? ltStr.split(',').map(function(t){ return t.trim(); }) : [];
-    var isLeft = leftTerms.indexOf(String(termId)) !== -1;
+  var allStudents = (_data.students||[]).filter(function(s){ return String(s.class_id)===String(cid); });
+  var allMarks    = _data.marks||[];
+  var allTerms    = _data.terms||[];
+  var termOrder   = {};
+  allTerms.forEach(function(t,i){ termOrder[String(t.term_id).trim()]=i; });
 
-    // Check if student hasn't joined yet for this term
-    var jt = String(stu.joined_term || '').trim();
+  function isActiveStudent(stu) {
+    var ltStr = String(stu.left_terms||'').trim();
+    var leftArr = ltStr ? ltStr.split(',').map(function(x){ return x.trim(); }) : [];
+    var isLeft = leftArr.indexOf(String(termId)) !== -1;
+    var jt = String(stu.joined_term||'').trim();
     var notYetJoined = false;
     if (jt) {
-      var joinedOrder = termOrder[jt];
-      var thisOrder   = termOrder[String(termId)];
-      if (joinedOrder !== undefined && thisOrder !== undefined && joinedOrder > thisOrder) {
-        notYetJoined = true;
-      }
+      var jo=termOrder[jt], to=termOrder[String(termId)];
+      if (jo!==undefined&&to!==undefined&&jo>to) notYetJoined=true;
     }
+    return { isLeft:isLeft, notYetJoined:notYetJoined, leftTerms:leftArr };
+  }
 
-    // Find mark row
-    var mRow = marks.find(function(m) {
-      return String(m.student_id) === stuId
-          && String(m.class_id)   === String(cid)
-          && String(m.subject_id) === String(sid)
-          && String(m.subpart_id || '') === String(spId || '')
-          && String(m.term_id)   === String(termId);
-    }) || {};
-
-    var t1 = mRow.test1 !== undefined && mRow.test1 !== null && mRow.test1 !== '' ? mRow.test1 : null;
-    var t2 = mRow.test2 !== undefined && mRow.test2 !== null && mRow.test2 !== '' ? mRow.test2 : null;
-    var ex = mRow.exam  !== undefined && mRow.exam  !== null && mRow.exam  !== '' ? mRow.exam  : null;
-    var hasMarks = (t1 !== null || t2 !== null || ex !== null);
-
+  var subpartData = subjObj.subparts.map(function(sp) {
+    var studentRows = allStudents.map(function(stu) {
+      var stuId  = String(stu.student_id);
+      var active = isActiveStudent(stu);
+      var mRow   = allMarks.find(function(m){
+        return String(m.student_id)===stuId
+            && String(m.class_id)===String(cid)
+            && String(m.subject_id)===String(sid)
+            && String(m.subpart_id||'')===String(sp.subpartId||'')
+            && String(m.term_id)===String(termId);
+      })||{};
+      var t1v = mRow.test1!==undefined&&mRow.test1!==null&&mRow.test1!=='' ? mRow.test1 : null;
+      var t2v = mRow.test2!==undefined&&mRow.test2!==null&&mRow.test2!=='' ? mRow.test2 : null;
+      var exv = mRow.exam !==undefined&&mRow.exam !==null&&mRow.exam !=='' ? mRow.exam  : null;
+      return {
+        studentId: stuId, name: String(stu.Name||stu.name||stuId),
+        isLeft: active.isLeft, notYetJoined: active.notYetJoined, leftTerms: active.leftTerms,
+        t1:t1v, t2:t2v, ex:exv,
+        t1Max:mRow.test1_max, t2Max:mRow.test2_max, exMax:mRow.exam_max
+      };
+    }).sort(function(a,b){ return a.name.localeCompare(b.name); });
     return {
-      studentId: stuId,
-      name:      stu.Name || stu.name || stuId,
-      hasMarks:  hasMarks,
-      isLeft:    isLeft,
-      notYetJoined: notYetJoined,
-      leftTerms: leftTerms,
-      t1: t1, t2: t2, ex: ex,
-      t1Max: mRow.test1_max, t2Max: mRow.test2_max, exMax: mRow.exam_max
+      subpartId: sp.subpartId, subpartName: sp.subpartName,
+      t1Max:sp.test1_max, t2Max:sp.test2_max, exMax:sp.exam_max,
+      t1Status:sp.test1_status, t2Status:sp.test2_status, exStatus:sp.exam_status,
+      students: studentRows
     };
-  }).sort(function(a, b){ return a.name.localeCompare(b.name); });
+  });
+
+  var termName  = (allTerms.find(function(t){ return String(t.term_id)===String(termId); })||{}).name||termId;
+  var className = (((_data.classes||[]).find(function(c){ return String(c.class_id)===String(cid); }))||{}).Name||cid;
 
   _mdetState = {
-    classId: cid, subjectId: sid, subpartId: spId, termId: String(termId),
-    subjectName: subjName, subpartName: spName, rows: rows, tab: 'all', search: ''
+    classId:cid, subjectId:sid, termId:String(termId),
+    subjectName:subjName, termName:termName, className:className,
+    subpartData:subpartData, activeSpIdx:0,
+    activeAssess:'all', viewTab:'all', search:''
   };
 
-  // Set header
-  var dispSp = (spName && spName !== '—') ? ' · ' + spName : '';
-  document.getElementById('mdetTitle').textContent    = subjName + dispSp;
-  var _mdetTermName  = ((_data.terms||[]).find(function(t){ return String(t.term_id)===String(termId); })||{}).name || termId;
-  var _mdetClassName = ((_data.classes||[]).find(function(c){ return String(c.class_id)===String(cid); })||{}).Name || cid;
-  document.getElementById('mdetSubtitle').textContent = 'Term: ' + _mdetTermName + ' · Class: ' + _mdetClassName;
+  document.getElementById('mdetTitle').textContent    = subjName;
+  document.getElementById('mdetSubtitle').textContent = termName + ' · ' + className;
   document.getElementById('mdetSearchInput').value    = '';
-
-  _mdetRefresh();
+  _mdetRebuild();
   document.getElementById('mdetOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
+
+/* legacy shim */
+function openProgressDetails(cid, sid, spId, termId, subjName, spName) { openMdetFull(cid, sid, termId, subjName); }
 
 function closeMdetModal() {
   document.getElementById('mdetOverlay').classList.remove('open');
   document.body.style.overflow = '';
 }
 
-function mdetFilter(val) {
-  _mdetState.search = val.toLowerCase().trim();
-  _mdetRenderList();
-}
+function _mdetRebuild() {
+  var sd=_mdetState.subpartData, spIdx=_mdetState.activeSpIdx;
+  var assess=_mdetState.activeAssess, viewTab=_mdetState.viewTab, search=_mdetState.search;
 
-function mdetSetTab(tab) {
-  _mdetState.tab    = tab;
-  _mdetState.search = '';
-  document.getElementById('mdetSearchInput').value = '';
-  _mdetRefresh();
-}
-
-function _mdetRefresh() {
-  var rows  = _mdetState.rows;
-  var withM = rows.filter(function(r){ return r.hasMarks && !r.isLeft && !r.notYetJoined; }).length;
-  var noM   = rows.filter(function(r){ return !r.hasMarks && !r.isLeft && !r.notYetJoined; }).length;
-  var left  = rows.filter(function(r){ return r.isLeft; }).length;
-  var nyj   = rows.filter(function(r){ return r.notYetJoined; }).length;
-  var total = rows.length;
-
-  document.getElementById('mdetMeta').innerHTML =
-    '<span class="mdet-meta-chip blue">👥 '+total+' total</span>' +
-    '<span class="mdet-meta-chip green">✅ '+withM+' entered</span>' +
-    '<span class="mdet-meta-chip amber">⚠️ '+noM+' missing</span>' +
-    (left ? '<span class="mdet-meta-chip red">🚪 '+left+' left</span>' : '') +
-    (nyj  ? '<span class="mdet-meta-chip" style="background:var(--purple-l);color:var(--purple)">🔜 '+nyj+' not enrolled yet</span>' : '');
-
-  // Tab buttons style
-  var tabs = {all:'mdetBtnAll', missing:'mdetBtnMissing', left:'mdetBtnLeft'};
-  var colors = {all:'var(--blue)', missing:'var(--amber)', left:'var(--red)'};
-  Object.keys(tabs).forEach(function(t){
-    var btn = document.getElementById(tabs[t]);
-    if (!btn) return;
-    var active = _mdetState.tab === t;
-    btn.style.background    = active ? colors[t] : 'var(--white)';
-    btn.style.borderColor   = active ? colors[t] : 'var(--line)';
-    btn.style.color         = active ? '#fff'    : 'var(--muted)';
+  var stuSeen={}, uTotal=0, uEntered=0, uMissing=0, uLeft=0;
+  sd.forEach(function(sp){
+    sp.students.forEach(function(r){
+      if(stuSeen[r.studentId]) return; stuSeen[r.studentId]=true;
+      if(r.notYetJoined) return;
+      if(r.isLeft){uLeft++;return;}
+      uTotal++;
+      if(r.t1!==null||r.t2!==null||r.ex!==null) uEntered++; else uMissing++;
+    });
   });
+  document.getElementById('mdetMeta').innerHTML =
+    '<span class="mdet-meta-chip blue">👥 '+uTotal+' students</span>'+
+    '<span class="mdet-meta-chip green">✅ '+uEntered+' entered</span>'+
+    '<span class="mdet-meta-chip amber">⚠️ '+uMissing+' missing</span>'+
+    (uLeft?'<span class="mdet-meta-chip red">🚪 '+uLeft+' left</span>':'')+
+    '<span class="mdet-meta-chip" style="background:var(--purple-l);color:var(--purple);border:1px solid #c4b5fd">📎 '+sd.length+' part(s)</span>';
 
+  var spTabHtml='';
+  sd.forEach(function(sp,i){
+    var sf=0,st2=0;
+    sp.students.forEach(function(r){
+      if(r.isLeft||r.notYetJoined) return;
+      var hasMax=false;
+      ['t1Max','t2Max','exMax'].forEach(function(m){ if(sp[m]!==''&&sp[m]!==null&&sp[m]!==undefined&&Number(sp[m])>0) hasMax=true; });
+      if(!hasMax) return; st2++;
+      if(r.t1!==null||r.t2!==null||r.ex!==null) sf++;
+    });
+    var spPct=st2?Math.min(100,Math.round(sf/st2*100)):0;
+    var pillCls=spPct===100?'full':spPct>0?'partial':'zero';
+    spTabHtml+='<button class="mdet-sp-tab'+(i===spIdx?' active':'')+'\" onclick="_mdetSetSp('+i+')">'
+      +(sd.length===1?'All Students':esc(sp.subpartName))
+      +' <span class="sp-pct-pill '+pillCls+'">'+spPct+'%</span></button>';
+  });
+  document.getElementById('mdetSpTabs').innerHTML = spTabHtml;
+
+  var sp=sd[spIdx];
+  var hasT1=sp.t1Max!==''&&sp.t1Max!==null&&sp.t1Max!==undefined&&Number(sp.t1Max)>0;
+  var hasT2=sp.t2Max!==''&&sp.t2Max!==null&&sp.t2Max!==undefined&&Number(sp.t2Max)>0;
+  var hasEx=sp.exMax!==''&&sp.exMax!==null&&sp.exMax!==undefined&&Number(sp.exMax)>0;
+  function assessPct(f){ var a=0,t=0; sp.students.forEach(function(r){ if(r.isLeft||r.notYetJoined)return; t++; if(r[f]!==null)a++; }); return t?Math.round(a/t*100):0; }
+  var t1Pct=assessPct('t1'), t2Pct=assessPct('t2'), exPct=assessPct('ex');
+  var aTabHtml='<button class="mdet-assess-tab'+(assess==='all'?' active all':'')+'\" onclick="_mdetSetAssess(\'all\')">All</button>';
+  if(hasT1) aTabHtml+='<button class="mdet-assess-tab'+(assess==='test1'?' active':'')+'\" onclick="_mdetSetAssess(\'test1\')">'+(sp.t1Status==='OPEN'?'● ':'')+'Test 1 <span class="at-pct">'+t1Pct+'%</span></button>';
+  if(hasT2) aTabHtml+='<button class="mdet-assess-tab'+(assess==='test2'?' active':'')+'\" onclick="_mdetSetAssess(\'test2\')">'+(sp.t2Status==='OPEN'?'● ':'')+'Test 2 <span class="at-pct">'+t2Pct+'%</span></button>';
+  if(hasEx) aTabHtml+='<button class="mdet-assess-tab'+(assess==='exam'?' active':'')+'\" onclick="_mdetSetAssess(\'exam\')">'+(sp.exStatus==='OPEN'?'● ':'')+'Exam <span class="at-pct">'+exPct+'%</span></button>';
+  if(!hasT1) aTabHtml+='<button class="mdet-assess-tab na" disabled>Test 1 N/A</button>';
+  if(!hasT2) aTabHtml+='<button class="mdet-assess-tab na" disabled>Test 2 N/A</button>';
+  if(!hasEx) aTabHtml+='<button class="mdet-assess-tab na" disabled>Exam N/A</button>';
+  document.getElementById('mdetAssessTabs').innerHTML = aTabHtml;
+
+  var missing2=0,entered2=0,left2=0,total2=0;
+  sp.students.forEach(function(r){
+    if(r.notYetJoined) return;
+    if(r.isLeft){left2++;return;}
+    total2++;
+    if(_hasMarkForAssess(r,assess,sp)) entered2++; else missing2++;
+  });
+  document.getElementById('mdetViewChips').innerHTML =
+    '<button class="mdet-view-chip'+(viewTab==='all'?' active all':'')+'\" onclick="_mdetSetView(\'all\')">All ('+total2+')</button>'+
+    '<button class="mdet-view-chip'+(viewTab==='missing'?' active missing':'')+'\" onclick="_mdetSetView(\'missing\')">⚠️ Missing ('+missing2+')</button>'+
+    '<button class="mdet-view-chip'+(viewTab==='entered'?' active entered':'')+'\" onclick="_mdetSetView(\'entered\')">✅ Entered ('+entered2+')</button>'+
+    (left2?'<button class="mdet-view-chip'+(viewTab==='left'?' active left':'')+'\" onclick="_mdetSetView(\'left\')">🚪 Left ('+left2+')</button>':'');
   _mdetRenderList();
 }
 
-function _mdetRenderList() {
-  var rows   = _mdetState.rows;
-  var tab    = _mdetState.tab;
-  var search = _mdetState.search;
+function _hasMarkForAssess(r,assess,sp){
+  if(assess==='all'){
+    var hasT1=sp.t1Max!==''&&sp.t1Max!==null&&sp.t1Max!==undefined&&Number(sp.t1Max)>0;
+    var hasT2=sp.t2Max!==''&&sp.t2Max!==null&&sp.t2Max!==undefined&&Number(sp.t2Max)>0;
+    var hasEx=sp.exMax!==''&&sp.exMax!==null&&sp.exMax!==undefined&&Number(sp.exMax)>0;
+    var needed=(hasT1?1:0)+(hasT2?1:0)+(hasEx?1:0);
+    var filled=(hasT1&&r.t1!==null?1:0)+(hasT2&&r.t2!==null?1:0)+(hasEx&&r.ex!==null?1:0);
+    return needed===0||filled===needed;
+  }
+  if(assess==='test1') return r.t1!==null;
+  if(assess==='test2') return r.t2!==null;
+  if(assess==='exam')  return r.ex!==null;
+  return false;
+}
 
-  var filtered = rows.filter(function(r) {
-    if (tab === 'missing' && (r.hasMarks || r.isLeft || r.notYetJoined)) return false;
-    if (tab === 'left'    && !r.isLeft) return false;
-    if (search && r.name.toLowerCase().indexOf(search) === -1) return false;
+function _mdetRenderList(){
+  var sp=_mdetState.subpartData[_mdetState.activeSpIdx];
+  var assess=_mdetState.activeAssess, viewTab=_mdetState.viewTab, search=_mdetState.search;
+  var filtered=sp.students.filter(function(r){
+    if(r.notYetJoined) return false;
+    if(viewTab==='left'&&!r.isLeft) return false;
+    if(viewTab!=='left'&&r.isLeft)  return false;
+    if(viewTab==='missing'&&_hasMarkForAssess(r,assess,sp)) return false;
+    if(viewTab==='entered'&&!_hasMarkForAssess(r,assess,sp)) return false;
+    if(search&&r.name.toLowerCase().indexOf(search)===-1) return false;
     return true;
   });
-
-  if (!filtered.length) {
-    document.getElementById('mdetList').innerHTML =
-      '<div class="empty-state" style="padding:32px 20px"><div class="empty-state-icon">🔍</div>' +
-      '<div class="empty-state-text">No students match this filter</div></div>';
+  var footer=document.getElementById('mdetFooterInfo');
+  if(footer) footer.textContent=filtered.length+' student(s) shown';
+  if(!filtered.length){
+    document.getElementById('mdetList').innerHTML='<div class="empty-state" style="padding:28px 20px"><div class="empty-state-icon">🔍</div><div class="empty-state-text">No students match this filter</div></div>';
     return;
   }
-
-  var html = '';
-  filtered.forEach(function(r, i) {
-    var rowCls, tagHtml, btnHtml = '';
-
-    if (r.notYetJoined) {
-      rowCls  = 'mdet-row';
-      tagHtml = '<span class="mdet-tag" style="background:var(--purple-l);color:var(--purple)">🔜 Not enrolled</span>';
-      // No action button — admin manages join term via Status modal
-    } else if (r.isLeft) {
-      rowCls  = 'mdet-row left-row';
-      tagHtml = '<span class="mdet-tag left">🚪 Left</span>';
-      var sid_s = String(r.studentId).replace(/'/g,"&#39;");
-      btnHtml = '<button class="mdet-left-btn restore" onclick="mdetToggleLeft(\''+sid_s+'\',false)">↩ Restore</button>';
-    } else if (r.hasMarks) {
-      rowCls  = 'mdet-row';
-      tagHtml = '<span class="mdet-tag has-marks">✅ Entered</span>';
+  var hasT1=sp.t1Max!==''&&sp.t1Max!==null&&sp.t1Max!==undefined&&Number(sp.t1Max)>0;
+  var hasT2=sp.t2Max!==''&&sp.t2Max!==null&&sp.t2Max!==undefined&&Number(sp.t2Max)>0;
+  var hasEx=sp.exMax!==''&&sp.exMax!==null&&sp.exMax!==undefined&&Number(sp.exMax)>0;
+  var html='';
+  filtered.forEach(function(r,i){
+    var tagHtml,btnHtml='';
+    if(r.isLeft){
+      tagHtml='<span class="mdet-tag left">🚪 Left</span>';
+      btnHtml='<button class="mdet-left-btn restore" onclick="mdetToggleLeft(\''+String(r.studentId).replace(/'/g,"&#39;")+'\',false)">↩ Restore</button>';
     } else {
-      rowCls  = 'mdet-row';
-      tagHtml = '<span class="mdet-tag no-marks">⚠️ Missing</span>';
-      var sid_s2 = String(r.studentId).replace(/'/g,"&#39;");
-      btnHtml = '<button class="mdet-left-btn mark-left" onclick="mdetToggleLeft(\''+sid_s2+'\',true)">🚪 Mark Left</button>';
+      var hasMark=_hasMarkForAssess(r,assess,sp);
+      tagHtml=hasMark?'<span class="mdet-tag has-marks">✅</span>':'<span class="mdet-tag no-marks">⚠️ Missing</span>';
+      if(!hasMark) btnHtml='<button class="mdet-left-btn mark-left" onclick="mdetToggleLeft(\''+String(r.studentId).replace(/'/g,"&#39;")+'\',true)">🚪 Mark Left</button>';
     }
-
-    // Score summary
-    var scores = [];
-    if (r.t1 !== null) scores.push('T1:' + r.t1 + (r.t1Max ? '/' + r.t1Max : ''));
-    if (r.t2 !== null) scores.push('T2:' + r.t2 + (r.t2Max ? '/' + r.t2Max : ''));
-    if (r.ex !== null) scores.push('E:'  + r.ex  + (r.exMax ? '/' + r.exMax : ''));
-    var scoreStr = scores.length ? scores.join(' · ') : '—';
-
-    html += '<div class="' + rowCls + '" id="mdet-row-' + esc(r.studentId) + '">' +
-      '<span class="mdet-num">' + (i+1) + '</span>' +
-      '<span class="mdet-name">' + esc(r.name) + '</span>' +
-      '<span class="mdet-score">' + esc(scoreStr) + '</span>' +
-      tagHtml +
-      btnHtml +
-    '</div>';
+    var scores=[];
+    if(assess==='all'||assess==='test1'){ if(hasT1) scores.push('<span style="color:'+(r.t1!==null?'var(--green)':'var(--red)')+'">T1:'+(r.t1!==null?r.t1+(sp.t1Max?'/'+sp.t1Max:''):'—')+'</span>'); }
+    if(assess==='all'||assess==='test2'){ if(hasT2) scores.push('<span style="color:'+(r.t2!==null?'var(--green)':'var(--red)')+'">T2:'+(r.t2!==null?r.t2+(sp.t2Max?'/'+sp.t2Max:''):'—')+'</span>'); }
+    if(assess==='all'||assess==='exam') { if(hasEx) scores.push('<span style="color:'+(r.ex!==null?'var(--green)':'var(--red)')+'">Ex:'+(r.ex!==null?r.ex+(sp.exMax?'/'+sp.exMax:''):'—')+'</span>'); }
+    html+='<div class="mdet-row'+(r.isLeft?' left-row':'')+'\" id="mdet-row-'+esc(r.studentId)+'">'
+      +'<span class="mdet-num">'+(i+1)+'</span>'
+      +'<span class="mdet-name">'+esc(r.name)+'</span>'
+      +'<span class="mdet-score">'+(scores.join(' <span style="color:var(--line)">|</span> ')||'—')+'</span>'
+      +tagHtml+btnHtml+'</div>';
   });
-
-  document.getElementById('mdetList').innerHTML = html;
+  document.getElementById('mdetList').innerHTML=html;
 }
+
+function _mdetSetSp(idx){ _mdetState.activeSpIdx=idx; _mdetState.activeAssess='all'; _mdetState.viewTab='all'; _mdetState.search=''; document.getElementById('mdetSearchInput').value=''; _mdetRebuild(); }
+function _mdetSetAssess(a){ _mdetState.activeAssess=a; _mdetState.viewTab='all'; _mdetRebuild(); }
+function _mdetSetView(v){ _mdetState.viewTab=v; _mdetRenderList(); }
+function mdetFilter(val){ _mdetState.search=val.toLowerCase().trim(); _mdetRenderList(); }
+function mdetSetTab(tab){ _mdetState.viewTab=tab==='missing'?'missing':tab==='left'?'left':'all'; _mdetState.search=''; document.getElementById('mdetSearchInput').value=''; _mdetRebuild(); }
+function _mdetRefresh(){ if(_mdetState.subpartData) _mdetRebuild(); }
 
 function mdetToggleLeft(studentId, isLeft) {
   var termId = _mdetState.termId;
-  // Optimistic UI update
-  var r = _mdetState.rows.find(function(x){ return x.studentId === studentId; });
+  var r = null;
+  (_mdetState.subpartData||[]).forEach(function(sp){ if(!r) r=sp.students.find(function(x){ return x.studentId===studentId; }); });
   if (!r) return;
-
-  // Disable the button immediately to prevent double-click
   var rowEl = document.getElementById('mdet-row-' + studentId);
   var btn   = rowEl ? rowEl.querySelector('.mdet-left-btn') : null;
-  if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
-
-  _gasPost('teacherMarkStudentLeft',{studentId:r.student_id,termId:termId,isLeft:isLeft}).then(function(res) {
-      if (res && res.ok) {
-        // Update local student cache
-        r.isLeft = isLeft;
-        if (isLeft) {
-          if (r.leftTerms.indexOf(termId) === -1) r.leftTerms.push(termId);
-        } else {
-          r.leftTerms = r.leftTerms.filter(function(t){ return t !== termId; });
-        }
-        r.left_terms = r.leftTerms.join(',');
-
-        // Also update _data.students cache so buildMarksHierarchy is consistent
-        var stuCache = (_data.students || []).find(function(s){ return String(s.student_id) === String(studentId); });
-        if (stuCache) stuCache.left_terms = r.left_terms;
-
-        showToast(isLeft ? '🚪 Marked as Left' : '✅ Student restored', 'ok');
-        _mdetRefresh();
-      } else {
-        showToast((res && res.error) || 'Failed to update', 'err');
-        if (btn) { btn.disabled = false; btn.textContent = isLeft ? '🚪 Mark Left' : '↩ Restore'; }
+  if (btn) { btn.disabled=true; btn.textContent='⏳'; }
+  _gasPost('teacherMarkStudentLeft',{studentId:studentId,termId:termId,isLeft:isLeft}).then(function(res) {
+    if (res && res.ok) {
+      (_mdetState.subpartData||[]).forEach(function(sp){
+        sp.students.forEach(function(s){
+          if(s.studentId!==studentId) return;
+          s.isLeft=isLeft;
+          if(isLeft){ if(s.leftTerms.indexOf(termId)===-1) s.leftTerms.push(termId); }
+          else { s.leftTerms=s.leftTerms.filter(function(t){ return t!==termId; }); }
+          s.left_terms=s.leftTerms.join(',');
+        });
+      });
+      var stuCache=(_data.students||[]).find(function(s){ return String(s.student_id)===String(studentId); });
+      if(stuCache){
+        var cached=stuCache.left_terms?String(stuCache.left_terms).split(',').map(function(t){return t.trim();}):[];
+        if(isLeft&&cached.indexOf(termId)===-1) cached.push(termId);
+        if(!isLeft) cached=cached.filter(function(t){ return t!==termId; });
+        stuCache.left_terms=cached.join(',');
       }
-    })
+      showToast(isLeft?'🚪 Marked as Left':'✅ Student restored','ok');
+      _mdetRebuild();
+    } else {
+      showToast((res&&res.error)||'Failed to update','err');
+      if(btn){ btn.disabled=false; btn.textContent=isLeft?'🚪 Mark Left':'↩ Restore'; }
+    }
+  }).catch(function(){
+    showToast('Network error. Try again.','err');
+    if(btn){ btn.disabled=false; btn.textContent=isLeft?'🚪 Mark Left':'↩ Restore'; }
+  });
 }
 
 </script>
@@ -5734,17 +5979,15 @@ function mdetToggleLeft(studentId, isLeft) {
       <button class="mdet-close" onclick="closeMdetModal()">✕</button>
     </div>
     <div class="mdet-meta" id="mdetMeta"></div>
-    <!-- Filter toolbar -->
-    <div style="display:flex;align-items:center;gap:8px;padding:10px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap">
-      <div class="mdet-search"><span class="mdet-search-icon">🔍</span><input type="text" placeholder="Search student..." oninput="mdetFilter(this.value)" id="mdetSearchInput"></div>
-      <div style="display:flex;gap:4px;margin-left:auto">
-        <button id="mdetBtnAll"     onclick="mdetSetTab('all')"     style="padding:5px 11px;border-radius:99px;border:1.5px solid var(--blue);background:var(--blue);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font)">All</button>
-        <button id="mdetBtnMissing" onclick="mdetSetTab('missing')" style="padding:5px 11px;border-radius:99px;border:1.5px solid var(--line);background:var(--white);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font)">⚠️ Missing</button>
-        <button id="mdetBtnLeft"    onclick="mdetSetTab('left')"    style="padding:5px 11px;border-radius:99px;border:1.5px solid var(--line);background:var(--white);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font)">🚪 Left</button>
-      </div>
+    <div class="mdet-sp-tabs" id="mdetSpTabs"></div>
+    <div class="mdet-assess-tabs" id="mdetAssessTabs"></div>
+    <div class="mdet-filter-bar">
+      <div class="mdet-search"><span class="mdet-search-icon">🔍</span><input type="text" placeholder="Search student…" oninput="mdetFilter(this.value)" id="mdetSearchInput"></div>
+      <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap" id="mdetViewChips"></div>
     </div>
     <div class="mdet-list" id="mdetList"></div>
     <div class="mdet-footer">
+      <span class="mdet-footer-info" id="mdetFooterInfo"></span>
       <button class="btn-secondary" onclick="closeMdetModal()">Close</button>
     </div>
   </div>
