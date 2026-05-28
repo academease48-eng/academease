@@ -2309,6 +2309,7 @@ function renderMarksEntry(opts) {
   if (!opts.backgroundRefresh) {
     document.getElementById('focusPane').classList.remove('open');
     document.getElementById('coursePickerContainer').style.display = '';
+    document.body.style.overflow = '';
   }
 
   var assignments = _data.assignments || [];
@@ -3548,6 +3549,30 @@ function _profileErr(msg) {
    NAVIGATION
 ════════════════════════════ */
 function showSection(name, _el) {
+  // ── Close any open focus panes so they don't bleed over other sections ──
+  var focusPane    = document.getElementById('focusPane');
+  var discPane     = document.getElementById('discFocusPane');
+  var p6Pane       = document.getElementById('p6FocusPane');
+  var p6EntryPane  = document.getElementById('p6-week-entry-pane');
+  var pickerCont   = document.getElementById('coursePickerContainer');
+
+  if (focusPane   && focusPane.classList.contains('open'))  {
+    focusPane.classList.remove('open');
+    if (pickerCont) pickerCont.style.display = '';
+    if (_focus) { _focus.dirty = {}; }
+    document.querySelectorAll('.mark-err-tip').forEach(function(t){ t.remove(); });
+  }
+  if (discPane    && discPane.classList.contains('open'))   { discPane.classList.remove('open'); }
+  if (p6Pane      && p6Pane.classList.contains('open'))     { p6Pane.classList.remove('open'); }
+  if (p6EntryPane && p6EntryPane.classList.contains('open')){
+    p6EntryPane.classList.remove('open');
+    var picker = document.getElementById('p6-week-picker');
+    if (picker) picker.style.display = '';
+    if (typeof _p6 !== 'undefined') _p6.dirty = {};
+  }
+  // Always restore body scroll (openFocus sets overflow:hidden)
+  document.body.style.overflow = '';
+
   // Deactivate all
   document.querySelectorAll('.section').forEach(function(el){ el.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(el){ el.classList.remove('active'); });
