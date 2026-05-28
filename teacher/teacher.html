@@ -1787,6 +1787,7 @@
       </table>
     </div>
   </div>
+</div><!-- /#p6FocusPane -->
 
 <!-- ── FOCUS MODE — outside .main so position:fixed works everywhere ── -->
 <div id="focusPane">
@@ -4737,13 +4738,13 @@ function p6OpenWeek(weekLabel) {
   _p6.dirty     = {};
 
   document.getElementById('p6-week-picker').style.display = 'none';
-  document.getElementById('p6-week-entry-pane').classList.add('open');
-  document.getElementById('p6-entry-title').textContent = '📅 ' + weekLabel;
+  document.getElementById('p6FocusPane').classList.add('open'); document.body.style.overflow='hidden';
+  document.getElementById('p6FocusTitle').textContent = '📅 ' + weekLabel;
 
   var terms      = _data.terms || [];
   var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
   var className  = (_data.allClasses || _data.classes || []).filter(function(c){ return String(c.class_id)===_p6.classId; }).map(function(c){ return c.Name||c.name||''; })[0] || '';
-  document.getElementById('p6-entry-meta').textContent =
+  document.getElementById('p6FocusMeta').textContent =
     [className, activeTerm.name ? activeTerm.name : '', _p6.subjectId ? 'Subject: ' + _p6.subjectId : ''].filter(Boolean).join('  ·  ');
 
   _p6RenderScoreTable();
@@ -4755,7 +4756,7 @@ function p6BackToPicker() {
     if (!window.confirm('You have unsaved changes. Discard and go back?')) return;
   }
   _p6.dirty = {};
-  document.getElementById('p6-week-entry-pane').classList.remove('open');
+  document.getElementById('p6FocusPane').classList.remove('open'); document.body.style.overflow='';
   document.getElementById('p6-week-picker').style.display = '';
   var btn = document.getElementById('p6-save-btn');
   if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
