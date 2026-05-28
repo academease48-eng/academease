@@ -1912,9 +1912,10 @@
 
 <script>
 /* page navigation */
-window._indexUrl = '';
+window._indexUrl = '../index.html';
 function _pageUrl(dest) {
-  google.script.run.withSuccessHandler(function(url){ window.location.href = url; }).getPageUrl(dest);
+  var map = { index: '../index.html', dashboard: 'dashboard.html', teacher: 'teacher.html' };
+  return map[dest] || '../index.html';
 }
 
 /* ════════════════════════════
@@ -2045,28 +2046,28 @@ window.addEventListener('load', function() {
   }
   
   // Set user info from session immediately (no round-trip)
-  var name = sessionStorage.getItem('userName') || localStorage.getItem('ae_userName') || 'Teacher';
+  var name = sessionStorage.getItem('displayName')
+          || localStorage.getItem('ae_displayName')
+          || sessionStorage.getItem('userName')
+          || localStorage.getItem('ae_userName')
+          || 'Teacher';
   setUserDisplay(name);
 
-  // Prefetch index URL for fast logout
-  google.script.run.withSuccessHandler(function(url){ window._indexUrl = url; }).getPageUrl('index');
+  // GitHub Pages — index URL is static
+  window._indexUrl = '../index.html';
 
   showLoading('Loading your dashboard…', ['Verifying your account', 'Loading classes & subjects', 'Loading marks & discipline', 'Preparing your dashboard']);
 
-  // Defer GAS call by one frame so the progress modal has time to paint before the network call starts
-  // Read from sessionStorage first (set on fresh login), then localStorage fallback (survives reload/new tab)
-  var _loginKey = sessionStorage.getItem('userId')
-               || sessionStorage.getItem('user_id')
-               || localStorage.getItem('ae_userId')
-               || localStorage.getItem('ae_user_id')
-               || sessionStorage.getItem('userName')
+  // username (column F) is the key used to look up teacher assignments on the server
+  var _loginKey = sessionStorage.getItem('userName')
                || localStorage.getItem('ae_userName')
+               || sessionStorage.getItem('userId')
+               || localStorage.getItem('ae_userId')
                || '';
   setTimeout(function() {
-    google.script.run
-      .withSuccessHandler(onBatchLoaded)
-      .withFailureHandler(function(){ hideLoading(); showToast('Failed to load data', 'err'); })
-      .getTeacherBatchData(_loginKey);
+    _gasGet('getTeacherBatchData', { userName: _loginKey })
+      .then(onBatchLoaded)
+      .catch(function(){ hideLoading(); showToast('Failed to load data', 'err'); });
   }, 50);
 }, {once: true});
 
