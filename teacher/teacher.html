@@ -4081,7 +4081,11 @@ function saveDiscMarks() {
         showToast('Save failed: ' + (res && res.error ? res.error.substring(0,140) : 'Unknown error'), 'err');
         document.getElementById('btnSaveDisc').disabled = false;
       }
-    })
+    }).catch(function(err) {
+      hideSaveBar(false);
+      showToast('Network error: ' + (err && err.message ? err.message.substring(0,120) : 'Please retry'), 'err');
+      document.getElementById('btnSaveDisc').disabled = false;
+    });
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -4597,7 +4601,12 @@ function saveDeliberation() {
         document.getElementById('btn-save-delib').disabled = false;
         document.getElementById('btn-save-delib').style.opacity = '1';
       }
-    })
+    }).catch(function(err) {
+      hideSaveBar(false);
+      showToast('Network error: ' + (err && err.message ? err.message.substring(0,120) : 'Please retry'), 'err');
+      document.getElementById('btn-save-delib').disabled = false;
+      document.getElementById('btn-save-delib').style.opacity = '1';
+    });
 }
 
 function doLogout() {
