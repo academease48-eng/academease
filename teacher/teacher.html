@@ -1787,8 +1787,8 @@
       </table>
     </div>
   </div>
-</div><!-- /#p6FocusPane -->
 
+</div><!-- /#p6FocusPane -->
 <!-- ── FOCUS MODE — outside .main so position:fixed works everywhere ── -->
 <div id="focusPane">
   <div class="focus-bar">
@@ -1912,33 +1912,42 @@
 </div>
 
 <script>
-/* Cloudflare Worker URL - proxies all requests to GAS */
-var WORKER_URL = 'https://mute-smoke-c8ea.academease48.workers.dev';
+/* Worker URL */
+var APPS_SCRIPT_URL = 'https://mute-smoke-c8ea.academease48.workers.dev';
+var _cbCount = 0;
 
-/* GET: WORKER_URL?action=...&key=val */
+/* JSONP GET */
 function _gasGet(action, params) {
-  var url = WORKER_URL + '?action=' + encodeURIComponent(action);
-  Object.keys(params || {}).forEach(function(k) {
-    var v = (params[k] !== undefined && params[k] !== null) ? params[k] : '';
-    url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(v);
+  return new Promise(function(resolve, reject) {
+    var cb = '_gasCb' + (++_cbCount);
+    var url = APPS_SCRIPT_URL + '?callback=' + cb + '&action=' + encodeURIComponent(action);
+    if (params) Object.keys(params).forEach(function(k){
+      url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(String(params[k]||''));
+    });
+    var script = document.createElement('script');
+    var timer = setTimeout(function(){ cleanup(); reject(new Error('Timeout')); }, 30000);
+    function cleanup(){ delete window[cb]; document.head.removeChild(script); clearTimeout(timer); }
+    window[cb] = function(data){ cleanup(); resolve(data); };
+    script.onerror = function(){ cleanup(); reject(new Error('Network error')); };
+    script.src = url;
+    document.head.appendChild(script);
   });
-  return fetch(url).then(function(r) { return r.json(); });
 }
 
-/* POST: worker reads { action, data } from JSON body */
+/* POST */
 function _gasPost(action, data) {
-  return fetch(WORKER_URL, {
+  return fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: action, data: data || {} })
+    body: JSON.stringify({ action: action, data: data })
   }).then(function(r) { return r.json(); });
 }
 
 /* page navigation */
 window._indexUrl = 'index.html';
 function _pageUrl(dest) {
-  if (dest === 'index' || dest === 'login') return 'index.html';
-  return dest + '.html';
+  var map = { index: 'index.html', teacher: 'teacher/teacher.html', dashboard: 'dashboard/dashboard.html' };
+  return map[dest] || dest + '.html';
 }
 
 /* ════════════════════════════
@@ -2064,7 +2073,7 @@ window.addEventListener('load', function() {
   // If NO role stored OR role is not TEACHER, redirect to login
   if (!storedRole || storedRole.toUpperCase() !== 'TEACHER') {
     var dest = 'index';
-    window.location.href = _pageUrl(dest); // navigates to login
+    window.location.href = _pageUrl(dest);
     return;
   }
   
@@ -2072,7 +2081,7 @@ window.addEventListener('load', function() {
   var name = sessionStorage.getItem('userName') || localStorage.getItem('ae_userName') || 'Teacher';
   setUserDisplay(name);
 
-  // Set index URL for logout navigation
+  // Prefetch index URL for fast logout
   window._indexUrl = _pageUrl('index');
 
   showLoading('Loading your dashboard…', ['Verifying your account', 'Loading classes & subjects', 'Loading marks & discipline', 'Preparing your dashboard']);
@@ -2088,8 +2097,8 @@ window.addEventListener('load', function() {
                || '';
   setTimeout(function() {
     _gasGet('getTeacherBatchData', { userName: _loginKey })
-      .then(function(data) { onBatchLoaded(data); })
-      .catch(function() { hideLoading(); showToast('Failed to load data', 'err'); });
+      .then(function(data){ onBatchLoaded(data); })
+      .catch(function(){ hideLoading(); showToast('Failed to load data', 'err'); });
   }, 50);
 }, {once: true});
 
@@ -2195,7 +2204,7 @@ function renderStats() {
 
   var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
   var termId = activeTerm.term_id || '';
-  var pendingCount = marks.filter(function(m){ return String(m.term_id)===String(termId) && (!m.test1 || !m.exam); }).length;
+  var pendingCount = marks.filter(function(m){ return m.term_id===termId && (!m.test1 || !m.exam); }).length;
 
   document.getElementById('statCourses').textContent = uniqueCourses;
   document.getElementById('statStudents').textContent = myStudents.length;
@@ -2211,7 +2220,7 @@ function renderStats() {
 function renderSection(name, opts) {
   // Deliberation is never cached — it re-renders cards each time (fast, client-side)
   // Marks also re-renders when called with backgroundRefresh to update cards after save
-  if (name !== 'deliberation' && name !== 'discipline' && name !== 'marks' && _rendered[name] && _data) return;
+  if (name !== 'deliberation' && name !== 'marks' && _rendered[name] && _data) return;
   if (name === 'marks' && _rendered[name] && _data && !(opts && opts.backgroundRefresh)) return;
   if (_data) _rendered[name] = true;
   switch(name) {
@@ -2330,7 +2339,7 @@ function renderMarksEntry(opts) {
 
   var cardMeta = myAssignments.map(function(a) {
     var mrows = marks.filter(function(m){
-      return String(m.class_id)===String(a.class_id) && String(m.subject_id)===String(a.subject_id) && String(m.term_id)===termId;
+      return m.class_id===a.class_id && m.subject_id===a.subject_id && String(m.term_id)===termId;
     });
     var t1Open = mrows.some(function(m){ return String(m.test1_status).toUpperCase()==='OPEN'; });
     var t2Open = mrows.some(function(m){ return String(m.test2_status).toUpperCase()==='OPEN'; });
@@ -2340,7 +2349,7 @@ function renderMarksEntry(opts) {
     var totalStudents = 0;
     var activeStudentIds0 = {};
     (_data.students||[]).forEach(function(s){
-      if (String(s.class_id) !== String(a.class_id)) return;
+      if (s.class_id !== a.class_id) return;
       var ltStr = String(s.left_terms || '').trim();
       if (ltStr && termId0) {
         var leftArr = ltStr.split(',').map(function(x){ return x.trim(); });
@@ -2408,9 +2417,9 @@ function renderMarksEntry(opts) {
 
   var html = '';
   myAssignments.forEach(function(a, idx) {
-    var cls   = classes.find(function(c){ return String(c.class_id) === String(a.class_id); }) || {};
-    var subj  = subjects.find(function(s){ return String(s.subject_id) === String(a.subject_id); }) || {};
-    var sps   = subparts.filter(function(sp){ return String(sp.subject_id) === String(a.subject_id); });
+    var cls   = classes.find(function(c){ return c.class_id === a.class_id; }) || {};
+    var subj  = subjects.find(function(s){ return s.subject_id === a.subject_id; }) || {};
+    var sps   = subparts.filter(function(sp){ return sp.subject_id === a.subject_id; });
     var icon  = icons[idx % icons.length];
     var clrCls= 'c'+(idx%5);
     var m     = cardMeta[idx];
@@ -2482,9 +2491,9 @@ function openFocus(assignIdx) {
   var a = myAssignments[assignIdx];
   if (!a) return;
 
-  var cls  = classes.find(function(c){ return String(c.class_id)===String(a.class_id); }) || {};
-  var subj = subjects.find(function(s){ return String(s.subject_id)===String(a.subject_id); }) || {};
-  var sps  = subparts.filter(function(sp){ return String(sp.subject_id)===String(a.subject_id); });
+  var cls  = classes.find(function(c){ return c.class_id===a.class_id; }) || {};
+  var subj = subjects.find(function(s){ return s.subject_id===a.subject_id; }) || {};
+  var sps  = subparts.filter(function(sp){ return sp.subject_id===a.subject_id; });
   var activeTerm0 = (_data.terms||[]).find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
   var classStudents = students.filter(function(s){
     if (String(s.class_id) !== String(a.class_id)) return false;
