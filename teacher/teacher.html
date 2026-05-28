@@ -2348,9 +2348,9 @@ function renderMarksEntry(opts) {
   if (!opts.backgroundRefresh) {
     var _fp = document.getElementById('focusPane');
     if (_fp) _fp.classList.remove('open');
-    document.body.style.overflow = '';
     var _cpc = document.getElementById('coursePickerContainer');
     if (_cpc) _cpc.style.display = '';
+    document.body.style.overflow = '';
   }
 
   var assignments = _data.assignments || [];
@@ -3621,40 +3621,36 @@ function _profileErr(msg) {
    NAVIGATION
 ════════════════════════════ */
 function _closeAllFocusPanes() {
-  // Close marks focus pane (without dirty-check since we're navigating away)
+  // Close marks focus pane — restore picker so section is usable on return
   var fp = document.getElementById('focusPane');
   if (fp && fp.classList.contains('open')) {
     fp.classList.remove('open');
-    document.body.style.overflow = '';
     _focus.dirty = {};
     document.querySelectorAll('.mark-err-tip').forEach(function(t){ t.remove(); });
     _errTips = {};
+    var cpc = document.getElementById('coursePickerContainer');
+    if (cpc) cpc.style.display = '';
   }
-  // Always restore course picker visibility when leaving marks
-  var cpc = document.getElementById('coursePickerContainer');
-  if (cpc) cpc.style.display = '';
 
-  // Close discipline focus pane
+  // Close discipline focus pane — restore picker
   var dfp = document.getElementById('discFocusPane');
   if (dfp && dfp.classList.contains('open')) {
     dfp.classList.remove('open');
-    document.body.style.overflow = '';
     _disc.dirty = {};
+    var dpc = document.getElementById('discPickerContainer');
+    if (dpc) dpc.style.display = '';
   }
-  // Always restore disc picker visibility when leaving discipline
-  var dpc = document.getElementById('discPickerContainer');
-  if (dpc) dpc.style.display = '';
 
-  // Close P6 weekly focus pane
+  // Close P6 weekly focus pane — restore week picker
   var p6fp = document.getElementById('p6FocusPane');
   if (p6fp && p6fp.classList.contains('open')) {
     p6fp.classList.remove('open');
-    document.body.style.overflow = '';
     _p6.dirty = {};
+    var p6wp = document.getElementById('p6-week-picker');
+    if (p6wp) p6wp.style.display = '';
   }
-  // Always restore P6 week picker visibility when leaving p6weekly
-  var p6wp = document.getElementById('p6-week-picker');
-  if (p6wp) p6wp.style.display = '';
+
+  document.body.style.overflow = '';
 }
 
 function showSection(name, _el) {
@@ -3723,13 +3719,11 @@ var _disc = {
 function renderDiscipline() {
   if (!_data) return;
 
-  // Always ensure focus pane is hidden and picker is shown when rendering discipline section
+  // Always ensure the focus pane is closed and picker is visible when rendering
   var dfp = document.getElementById('discFocusPane');
-  if (dfp && !dfp.classList.contains('open')) {
-    // pane already closed — ensure picker is visible
-    var dpc = document.getElementById('discPickerContainer');
-    if (dpc) dpc.style.display = '';
-  }
+  if (dfp) dfp.classList.remove('open');
+  var dpc = document.getElementById('discPickerContainer');
+  if (dpc) dpc.style.display = '';
 
   var teacherId      = _data.teacherId      || '';
   var teacherClassId = _data.teacherClassId || '';
@@ -4780,9 +4774,7 @@ var _p6 = {
 function renderP6Weekly() {
   if (!_data || !_data.isP6Teacher) return;
 
-  // Always make sure focus pane is hidden and week picker is visible when entering this section
-  var p6fp = document.getElementById('p6FocusPane');
-  if (p6fp) p6fp.classList.remove('open');
+  // Ensure week picker is visible (focus pane already closed by _closeAllFocusPanes)
   var p6wp = document.getElementById('p6-week-picker');
   if (p6wp) p6wp.style.display = '';
   document.body.style.overflow = '';
