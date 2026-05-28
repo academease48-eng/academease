@@ -1274,8 +1274,13 @@
     /* ══════════════════════════════════
        P6 WEEKLY MARKS
     ══════════════════════════════════ */
-    /* Week card grid — identical layout to Marks course-card grid */
+    /* Week card grid */
     .p6-week-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:24px}
+    .p6-week-card{background:var(--white);border:1.5px solid var(--line);border-radius:var(--r12);padding:18px 16px;cursor:pointer;transition:all .16s;box-shadow:var(--sh-sm);position:relative}
+    .p6-week-card:hover{border-color:var(--blue-m);box-shadow:var(--sh-md);transform:translateY(-2px)}
+    .p6-week-card-label{font-size:15px;font-weight:800;color:var(--ink);margin-bottom:5px;letter-spacing:-.2px}
+    .p6-week-card-meta{font-size:12px;color:var(--muted);font-weight:600}
+    .p6-week-card-saved{display:inline-block;margin-top:8px;font-size:11px;font-weight:700;color:var(--green);background:var(--green-l);padding:2px 8px;border-radius:99px;border:1px solid var(--green-m)}
 
     /* ── Discard modal ── */
     #discardModal{display:none;position:fixed;inset:0;z-index:9995;background:rgba(17,24,39,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px}
@@ -1911,6 +1916,44 @@
 </div>
 
 <script>
+/* ══ GitHub Pages: JSONP helper (bypasses CORS) ══ */
+var APPS_SCRIPT_URL = 'https://mute-smoke-c8ea.academease48.workers.dev';
+var _cbCount = 0;
+function _gasGet(action, params) {
+  return new Promise(function(resolve, reject) {
+    var cb = '_gasCb' + (++_cbCount);
+    var url = APPS_SCRIPT_URL + '?callback=' + cb + '&action=' + encodeURIComponent(action);
+    if (params) Object.keys(params).forEach(function(k){
+      url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(String(params[k]||''));
+    });
+    var script = document.createElement('script');
+    var timer = setTimeout(function(){ cleanup(); reject(new Error('Timeout')); }, 30000);
+    function cleanup(){ delete window[cb]; document.head.removeChild(script); clearTimeout(timer); }
+    window[cb] = function(data){ cleanup(); resolve(data); };
+    script.onerror = function(){ cleanup(); reject(new Error('Network error')); };
+    script.src = url;
+    document.head.appendChild(script);
+  });
+}
+function _gasPost(action, data) {
+  var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var timeoutId  = controller
+    ? setTimeout(function() { controller.abort(); }, 90000)
+    : null;
+  return fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: action, data: data }),
+    signal: controller ? controller.signal : undefined
+  }).then(function(r) {
+    if (timeoutId) clearTimeout(timeoutId);
+    return r.json();
+  }).catch(function(err) {
+    if (timeoutId) clearTimeout(timeoutId);
+    if (err && err.name === 'AbortError') throw new Error('Request timed out — server is still saving, please wait and refresh.');
+    throw err;
+  });
+}
 /* page navigation */
 window._indexUrl = '../index.html';
 function _pageUrl(dest) {
