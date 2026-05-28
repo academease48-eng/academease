@@ -2088,11 +2088,8 @@ window.addEventListener('load', function() {
 
   // Defer GAS call by one frame so the progress modal has time to paint before the network call starts
   // Read from sessionStorage first (set on fresh login), then localStorage fallback (survives reload/new tab)
-  var _loginKey = sessionStorage.getItem('userId')
-               || sessionStorage.getItem('user_id')
-               || localStorage.getItem('ae_userId')
-               || localStorage.getItem('ae_user_id')
-               || sessionStorage.getItem('userName')
+  // getTeacherBatchData looks up by username — always use userName, not userId
+  var _loginKey = sessionStorage.getItem('userName')
                || localStorage.getItem('ae_userName')
                || '';
   setTimeout(function() {
