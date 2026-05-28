@@ -30,8 +30,8 @@
     #offlineBanner .ob-icon{font-size:16px}
     /* push app down when banner visible */
     body.is-offline .app{margin-top:42px}
-    body.is-offline #focusPane,body.is-offline #discFocusPane{top:98px}
-    @media(max-width:600px){body.is-offline #focusPane,body.is-offline #discFocusPane{top:42px}}
+    body.is-offline #focusPane,body.is-offline #discFocusPane,body.is-offline #p6FocusPane{top:98px}
+    @media(max-width:600px){body.is-offline #focusPane,body.is-offline #discFocusPane,body.is-offline #p6FocusPane{top:42px}}
 
     /* ── TOAST ── */
     #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--ink2);color:#fff;padding:9px 18px;border-radius:99px;font-size:12.5px;font-weight:600;z-index:9999;transition:transform .28s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;box-shadow:var(--sh-md)}
@@ -479,11 +479,93 @@
     .course-chip-sm.open{background:var(--green-l);color:var(--green);border-color:var(--green-m)}
     .course-chip-sm.closed{background:var(--red-l);color:var(--red);border-color:var(--red-m)}
 
+    /* ── URGENT card (started but incomplete: 0% < progress < 100%) ── */
+    .course-card.urgent{
+      border-color:#ef4444 !important;
+      box-shadow:0 0 0 2px rgba(239,68,68,.18), var(--sh-md) !important;
+      background:var(--white) !important;
+    }
+    .course-card.urgent:hover{
+      border-color:#dc2626 !important;
+      box-shadow:0 0 0 3px rgba(220,38,38,.22), 0 8px 24px rgba(220,38,68,.14) !important;
+      transform:translateY(-2px);
+    }
+    /* Warning badge top-right — red (urgent) */
+    .course-card-warn{
+      position:absolute;top:-1px;right:-1px;
+      background:#dc2626;color:#fff;
+      font-size:10px;font-weight:800;
+      padding:4px 10px 4px 8px;
+      border-radius:0 var(--r12) 0 var(--r10);
+      display:flex;align-items:center;gap:4px;
+      letter-spacing:.2px;white-space:nowrap;
+      animation:warnPulse 2.4s ease-in-out infinite;
+      pointer-events:none;
+    }
+    @keyframes warnPulse{
+      0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}
+      50%{box-shadow:0 0 0 5px rgba(220,38,38,0)}
+    }
+    /* Urgent progress bar — amber→red gradient */
+    .course-card.urgent .cc-prog-bar-fill{
+      background:linear-gradient(90deg,#f59e0b,#ef4444) !important;
+    }
+
+    /* ── NOT-STARTED card (0% — nothing submitted yet) ── */
+    .course-card.not-started{
+      border-color:#f59e0b !important;
+      box-shadow:0 0 0 2px rgba(245,158,11,.15), var(--sh-md) !important;
+      background:var(--white) !important;
+    }
+    .course-card.not-started:hover{
+      border-color:#d97706 !important;
+      box-shadow:0 0 0 3px rgba(217,119,6,.2), 0 8px 24px rgba(217,119,6,.12) !important;
+      transform:translateY(-2px);
+    }
+    /* Warning badge — amber (not started) */
+    .course-card-warn.amber{
+      background:#d97706;
+      animation:warnPulseAmber 2.4s ease-in-out infinite;
+    }
+    @keyframes warnPulseAmber{
+      0%,100%{box-shadow:0 0 0 0 rgba(217,119,6,.4)}
+      50%{box-shadow:0 0 0 5px rgba(217,119,6,0)}
+    }
+    /* Not-started progress bar track hint */
+    .course-card.not-started .cc-prog-bar-fill{
+      background:#f59e0b !important;
+    }
+
+    /* ── BLOCKED card (greyed-out — must fix urgent cards first) ── */
+    .course-card.blocked{
+      opacity:.42 !important;
+      filter:grayscale(60%) !important;
+      cursor:not-allowed !important;
+      pointer-events:none !important;
+      transform:none !important;
+      box-shadow:none !important;
+      border-color:var(--line) !important;
+    }
+    .course-card.blocked:hover{
+      transform:none !important;
+      box-shadow:none !important;
+    }
+    /* Lock overlay chip */
+    .course-card-lock{
+      position:absolute;top:10px;right:10px;
+      background:rgba(156,163,175,.22);
+      color:#6b7280;
+      font-size:11px;font-weight:700;
+      padding:3px 8px;border-radius:99px;
+      display:flex;align-items:center;gap:4px;
+      pointer-events:none;
+    }
+
     /* ══════════════════════════════════
        MARKS ENTRY — FOCUS MODE
     ══════════════════════════════════ */
-    #focusPane,#discFocusPane{display:none;position:fixed;top:56px;left:200px;right:0;bottom:0;background:var(--white);z-index:400;flex-direction:column;overflow:hidden;border-left:1px solid var(--line)}
-    #focusPane.open,#discFocusPane.open{display:flex}
+    #focusPane,#discFocusPane,#p6FocusPane{display:none;position:fixed;top:56px;left:200px;right:0;bottom:0;background:var(--white);z-index:400;flex-direction:column;overflow:hidden;border-left:1px solid var(--line)}
+    #focusPane.open,#discFocusPane.open,#p6FocusPane.open{display:flex}
 
     /* focus topbar */
     .focus-bar{display:flex;align-items:center;gap:12px;padding:0 20px;height:52px;border-bottom:1.5px solid var(--line);background:var(--white);flex-shrink:0}
@@ -762,7 +844,7 @@
       .mobile-menu-btn{display:flex}
 
       /* Focus pane: full screen on mobile */
-      #focusPane,#discFocusPane{top:0;left:0;right:0;bottom:0;z-index:800}
+      #focusPane,#discFocusPane,#p6FocusPane{top:0;left:0;right:0;bottom:0;z-index:800}
       .focus-bar{padding:0 12px;height:48px}
       .focus-esc{display:none}
       .focus-tabs{padding:0 8px}
@@ -1192,56 +1274,37 @@
     /* ══════════════════════════════════
        P6 WEEKLY MARKS
     ══════════════════════════════════ */
-    /* Week card grid */
-    /* ── P6 WEEKLY: Week picker grid ── */
-    .p6-week-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:24px}
-    .p6-week-card{background:var(--white);border:1.5px solid var(--line);border-radius:var(--r12);padding:18px 16px;cursor:pointer;transition:all .16s;box-shadow:var(--sh-sm);position:relative}
-    .p6-week-card:hover{border-color:var(--blue-m);box-shadow:var(--sh-md);transform:translateY(-2px)}
-    .p6-week-card-label{font-size:15px;font-weight:800;color:var(--ink);margin-bottom:5px;letter-spacing:-.2px}
-    .p6-week-card-meta{font-size:12px;color:var(--muted);font-weight:600}
-    .p6-week-card-saved{display:inline-block;margin-top:8px;font-size:11px;font-weight:700;color:var(--green);background:var(--green-l);padding:2px 8px;border-radius:99px;border:1px solid var(--green-m)}
+    /* Week card grid — identical layout to Marks course-card grid */
+    .p6-week-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:24px}
 
-    /* ── P6 WEEKLY: Entry pane — reuses focus-pane structure ── */
-    .p6-week-entry-pane{display:none;flex-direction:column;gap:0;height:calc(100vh - 128px);border:1.5px solid var(--line);border-radius:var(--r12);overflow:hidden;background:var(--white)}
-    .p6-week-entry-pane.open{display:flex}
-    .p6-entry-bar{display:flex;align-items:center;gap:10px;background:var(--white);border-bottom:1.5px solid var(--line);padding:12px 16px;flex-shrink:0;flex-wrap:wrap}
-    .p6-back-btn{padding:7px 14px;border:1.5px solid var(--line);border-radius:var(--r8);background:var(--bg);font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;font-family:var(--font);white-space:nowrap;transition:all .14s}
-    .p6-back-btn:hover{background:var(--blue-l);border-color:var(--blue-m);color:var(--blue)}
-    .p6-save-btn{padding:8px 18px;background:var(--blue);color:#fff;border:none;border-radius:var(--r8);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background .14s;white-space:nowrap;flex-shrink:0}
-    .p6-save-btn:not(:disabled):hover{background:var(--blue-d)}
-    .p6-save-btn:disabled{cursor:default}
-    .p6-entry-bar-title{min-width:0;flex:1 1 150px}
-    /* Score input — matches focus-pane marks-input style */
-    .p6-score-input{width:100%;height:100%;min-height:42px;border:none;outline:none;text-align:center;font-size:13px;font-weight:700;font-family:var(--font);color:var(--ink);background:transparent;padding:0 6px;-moz-appearance:textfield;appearance:textfield;cursor:cell}
+    /* ── Discard modal ── */
+    #discardModal{display:none;position:fixed;inset:0;z-index:9995;background:rgba(17,24,39,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px}
+    #discardModal.open{display:flex}
+    .discard-modal-box{background:#fff;border-radius:20px;width:100%;max-width:380px;padding:28px 28px 24px;box-shadow:0 24px 64px rgba(0,0,0,.18),0 8px 24px rgba(220,38,38,.12);border:1px solid var(--red-m);animation:progIn .25s cubic-bezier(.22,.68,0,1.2)}
+    .discard-modal-icon{font-size:36px;margin-bottom:14px;text-align:center}
+    .discard-modal-title{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:8px;text-align:center;letter-spacing:-.3px}
+    .discard-modal-sub{font-size:13px;color:var(--muted);font-weight:500;text-align:center;line-height:1.5;margin-bottom:22px}
+    .discard-modal-btns{display:flex;gap:10px}
+    .discard-modal-btns button{flex:1;padding:11px 16px;border-radius:var(--r10);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;border:none;transition:all .15s}
+    .discard-keep{background:var(--bg);color:var(--ink);border:1.5px solid var(--line) !important}
+    .discard-keep:hover{background:var(--blue-l);border-color:var(--blue-m) !important;color:var(--blue)}
+    .discard-go{background:var(--red);color:#fff}
+    .discard-go:hover{background:#b91c1c}
+
+    /* ── P6 WEEKLY: Score input inside marks-table ── */
+    .p6-score-input{width:100%;height:100%;min-height:38px;border:none;outline:none;text-align:center;font-size:13px;font-weight:700;font-family:var(--font);color:var(--ink);background:transparent;padding:0 6px;-moz-appearance:textfield;appearance:textfield;cursor:cell}
     .p6-score-input::-webkit-outer-spin-button,.p6-score-input::-webkit-inner-spin-button{-webkit-appearance:none;appearance:none}
     .p6-score-input:focus{background:#fff;box-shadow:inset 0 0 0 2px var(--blue);z-index:2;position:relative;border-radius:4px;color:var(--blue)}
     .p6-score-input.dirty{color:var(--amber);background:#fffcf0}
     .p6-score-input.dirty:focus{background:#fff;box-shadow:inset 0 0 0 2px #f59e0b}
-    /* Reuse marks-table row states */
-    #p6-marks-table tbody tr.row-saved{background:#f0fdf4}
-    #p6-marks-table tbody tr.row-dirty{background:#fffbeb}
     #p6-marks-table td{padding:0;height:38px;border-bottom:1px solid var(--line)}
     #p6-marks-table .num-col{width:36px;text-align:center;font-size:11px;color:var(--faint);font-weight:700;padding:0 6px}
     #p6-marks-table .name-col{min-width:160px;padding:0 10px;font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap}
 
-    /* ── Mobile: p6 weekly ── */
-    @media(max-width:600px){
+    @media(max-width:640px){
       .p6-week-grid{grid-template-columns:repeat(2,1fr);gap:10px}
-      .p6-week-card{padding:14px 12px}
-      .p6-week-card-label{font-size:13px}
-      .p6-week-entry-pane{height:calc(100vh - 80px - env(safe-area-inset-bottom,0px))}
-      .p6-entry-bar{padding:10px 12px;gap:8px}
-      .p6-entry-bar-title{order:3;width:100%;flex-basis:100%}
-      .p6-back-btn{padding:6px 12px;font-size:12px}
-      .p6-save-btn{padding:7px 14px;font-size:12px}
-      #p6-dirty-count{font-size:11px}
-      #p6-marks-table .name-col{min-width:130px;font-size:11.5px}
-      .p6-score-input{font-size:12px}
     }
-    @media(max-width:380px){
-      .p6-week-grid{grid-template-columns:1fr}
-      #p6-marks-table .name-col{min-width:110px;font-size:11px}
-    }
+    @media(max-width:380px){ .p6-week-grid{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
@@ -1675,21 +1738,12 @@
       <div class="page-header">
         <div class="breadcrumb"><a onclick="showSection('overview')">Home</a><span class="breadcrumb-sep">›</span><span>P6 Weekly Marks</span></div>
         <div class="page-title">P6 Weekly Marks</div>
-        <div class="page-subtitle" id="p6-page-subtitle">Enter weekly test scores for your subject</div>
+        <div class="page-subtitle" id="p6-page-subtitle">Select a week to enter scores</div>
       </div>
 
-      <!-- Week picker view -->
+      <!-- Week picker view — only the cards grid -->
       <div id="p6-week-picker">
-        <div class="card" style="margin-bottom:16px;padding:14px 18px">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-            <div>
-              <div style="font-size:14px;font-weight:700;color:var(--ink)">Select a week to enter scores for your subject</div>
-              <div id="p6-subject-badge-wrap" style="margin-top:4px"></div>
-            </div>
-            <span id="p6-term-badge" style="font-size:12px;font-weight:700;color:var(--blue);background:var(--blue-l);padding:4px 12px;border-radius:99px;border:1px solid var(--blue-m)"></span>
-          </div>
-        </div>
-        <div id="p6-week-grid" class="p6-week-grid"></div>
+        <div id="p6-week-grid" class="course-grid"></div>
         <div id="p6-no-weeks-notice" style="display:none">
           <div class="card"><div class="empty-state" style="padding:48px 20px">
             <div class="empty-state-icon">📅</div>
@@ -1697,46 +1751,42 @@
           </div></div>
         </div>
       </div>
-
-      <!-- Score entry pane (hidden until a week is selected) — uses focus-pane styling -->
-      <div id="p6-week-entry-pane" class="p6-week-entry-pane">
-        <!-- Toolbar -->
-        <div class="p6-entry-bar">
-          <button class="p6-back-btn" onclick="p6BackToPicker()">← Back</button>
-          <div class="p6-entry-bar-title">
-            <div id="p6-entry-title" style="font-size:16px;font-weight:800;color:var(--ink)"></div>
-            <div id="p6-entry-meta" style="font-size:12px;color:var(--muted);font-weight:600;margin-top:1px"></div>
-          </div>
-          <div style="flex:1"></div>
-          <span id="p6-dirty-count" style="display:none;font-size:12px;font-weight:700;color:var(--amber);white-space:nowrap"></span>
-          <button id="p6-save-btn" class="p6-save-btn" onclick="p6SaveScores()" disabled style="opacity:.5">💾 Save Scores</button>
-        </div>
-        <!-- Search + status bar -->
-        <div class="focus-toolbar" style="border-top:1px solid var(--line)">
-          <div class="focus-search">
-            <span class="focus-search-icon">🔍</span>
-            <input type="text" placeholder="Search student..." id="p6SearchInput" oninput="p6FilterStudents(this.value)">
-          </div>
-          <div class="focus-status-chips">
-            <span class="fchip pending"><span class="fchip-dot" style="background:var(--amber)"></span>Pending <span id="p6ChipPending">0</span></span>
-            <span class="fchip saved"><span class="fchip-dot" style="background:var(--green)"></span>Saved <span id="p6ChipSaved">0</span></span>
-          </div>
-          <div class="focus-spacer"></div>
-          <span class="focus-stats" id="p6Stats"></span>
-        </div>
-        <!-- Scrollable table — same marks-table style -->
-        <div class="focus-body">
-          <div style="overflow-x:auto;height:100%">
-            <table class="marks-table" id="p6-marks-table">
-              <thead id="p6-score-thead"></thead>
-              <tbody id="p6-score-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
     </div>
 
   </main>
+
+<!-- ── P6 WEEKLY FOCUS PANE — full-screen overlay, outside .main ── -->
+<div id="p6FocusPane">
+  <div class="focus-bar">
+    <button class="focus-back" onclick="p6BackToPicker()">&#8592; Exit Focus</button>
+    <span class="focus-title" id="p6FocusTitle">📅 Week</span>
+    <span id="p6FocusMeta" style="font-size:11.5px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px"></span>
+    <div class="focus-spacer"></div>
+    <span id="p6-dirty-count" style="display:none;font-size:12px;font-weight:700;color:var(--amber);white-space:nowrap"></span>
+    <button id="p6-save-btn" class="btn-save-all" onclick="p6SaveScores()" disabled>💾 Save Scores</button>
+    <span class="focus-esc">Esc to exit</span>
+  </div>
+  <div class="focus-toolbar">
+    <div class="focus-search">
+      <span class="focus-search-icon">🔍</span>
+      <input type="text" placeholder="Search student..." id="p6SearchInput" oninput="p6FilterStudents(this.value)">
+    </div>
+    <div class="focus-status-chips">
+      <span class="fchip pending"><span class="fchip-dot" style="background:var(--amber)"></span>Pending <span id="p6ChipPending">0</span></span>
+      <span class="fchip saved"><span class="fchip-dot" style="background:var(--green)"></span>Saved <span id="p6ChipSaved">0</span></span>
+    </div>
+    <div class="focus-spacer"></div>
+    <span class="focus-avg" id="p6Avg" style="font-size:11.5px;color:var(--muted);font-weight:600;white-space:nowrap;display:none"></span>
+    <span class="focus-stats" id="p6Stats"></span>
+  </div>
+  <div class="focus-body">
+    <div style="overflow-x:auto;height:100%">
+      <table class="marks-table" id="p6-marks-table">
+        <thead id="p6-score-thead"></thead>
+        <tbody id="p6-score-tbody"></tbody>
+      </table>
+    </div>
+  </div>
 
 <!-- ── FOCUS MODE — outside .main so position:fixed works everywhere ── -->
 <div id="focusPane">
@@ -1845,53 +1895,27 @@
   <div class="focus-pagination" id="discPagination"></div>
 </div>
 
+<!-- ── DISCARD MODAL ── -->
+<div id="discardModal">
+  <div class="discard-modal-box">
+    <div class="discard-modal-icon">⚠️</div>
+    <div class="discard-modal-title">Unsaved Changes</div>
+    <div class="discard-modal-sub">You have unsaved marks. Are you sure you want to leave? Your changes will be lost.</div>
+    <div class="discard-modal-btns">
+      <button class="discard-keep" onclick="closeDiscardModal()">Keep Editing</button>
+      <button class="discard-go" onclick="confirmDiscard()">Discard & Leave</button>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <script>
-/* ══ GitHub Pages: JSONP helper (bypasses CORS) ══ */
-var APPS_SCRIPT_URL = 'https://mute-smoke-c8ea.academease48.workers.dev';
-var _cbCount = 0;
-function _gasGet(action, params) {
-  return new Promise(function(resolve, reject) {
-    var cb = '_gasCb' + (++_cbCount);
-    var url = APPS_SCRIPT_URL + '?callback=' + cb + '&action=' + encodeURIComponent(action);
-    if (params) Object.keys(params).forEach(function(k){
-      url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(String(params[k]||''));
-    });
-    var script = document.createElement('script');
-    var timer = setTimeout(function(){ cleanup(); reject(new Error('Timeout')); }, 30000);
-    function cleanup(){ delete window[cb]; document.head.removeChild(script); clearTimeout(timer); }
-    window[cb] = function(data){ cleanup(); resolve(data); };
-    script.onerror = function(){ cleanup(); reject(new Error('Network error')); };
-    script.src = url;
-    document.head.appendChild(script);
-  });
-}
-function _gasPost(action, data) {
-  var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  var timeoutId  = controller
-    ? setTimeout(function() { controller.abort(); }, 90000)  // 90-second timeout for large classes
-    : null;
-  return fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: action, data: data }),
-    signal: controller ? controller.signal : undefined
-  }).then(function(r) {
-    if (timeoutId) clearTimeout(timeoutId);
-    return r.json();
-  }).catch(function(err) {
-    if (timeoutId) clearTimeout(timeoutId);
-    if (err && err.name === 'AbortError') throw new Error('Request timed out — server is still saving, please wait and refresh.');
-    throw err;
-  });
-}
 /* page navigation */
-function _pageUrl(page) {
-  var map = {index:'../index.html', dashboard:'dashboard.html', teacher:'teacher.html'};
-  return map[page] || '../index.html';
+window._indexUrl = '';
+function _pageUrl(dest) {
+  google.script.run.withSuccessHandler(function(url){ window.location.href = url; }).getPageUrl(dest);
 }
-window._indexUrl = '../index.html';
 
 /* ════════════════════════════
    STATE
@@ -2020,28 +2044,29 @@ window.addEventListener('load', function() {
     return;
   }
   
-  // displayName (column B: name) → shown in UI greeting, sidebar, profile
-  // username    (column F: username) → used for API calls only
-  var displayName = sessionStorage.getItem('displayName')
-                 || localStorage.getItem('ae_displayName')
-                 || sessionStorage.getItem('userName')
-                 || localStorage.getItem('ae_userName')
-                 || 'Teacher';
-  setUserDisplay(displayName);
+  // Set user info from session immediately (no round-trip)
+  var name = sessionStorage.getItem('userName') || localStorage.getItem('ae_userName') || 'Teacher';
+  setUserDisplay(name);
 
   // Prefetch index URL for fast logout
-  window._indexUrl = '../index.html'; // GitHub Pages
+  google.script.run.withSuccessHandler(function(url){ window._indexUrl = url; }).getPageUrl('index');
 
   showLoading('Loading your dashboard…', ['Verifying your account', 'Loading classes & subjects', 'Loading marks & discipline', 'Preparing your dashboard']);
 
-  // username (column F) is the key used to look up teacher assignments on the server
-  var _loginKey = sessionStorage.getItem('userName')
-               || localStorage.getItem('ae_userName')
-               || sessionStorage.getItem('userId')
+  // Defer GAS call by one frame so the progress modal has time to paint before the network call starts
+  // Read from sessionStorage first (set on fresh login), then localStorage fallback (survives reload/new tab)
+  var _loginKey = sessionStorage.getItem('userId')
+               || sessionStorage.getItem('user_id')
                || localStorage.getItem('ae_userId')
+               || localStorage.getItem('ae_user_id')
+               || sessionStorage.getItem('userName')
+               || localStorage.getItem('ae_userName')
                || '';
   setTimeout(function() {
-    _gasGet('getTeacherBatchData',{userName:_loginKey}).then(onBatchLoaded).catch(function(){ hideLoading(); showToast('Failed to load data','err'); });
+    google.script.run
+      .withSuccessHandler(onBatchLoaded)
+      .withFailureHandler(function(){ hideLoading(); showToast('Failed to load data', 'err'); })
+      .getTeacherBatchData(_loginKey);
   }, 50);
 }, {once: true});
 
@@ -2160,14 +2185,16 @@ function renderStats() {
   }
 }
 
-function renderSection(name) {
+function renderSection(name, opts) {
   // Deliberation is never cached — it re-renders cards each time (fast, client-side)
-  if (name !== 'deliberation' && _rendered[name] && _data) return;
+  // Marks also re-renders when called with backgroundRefresh to update cards after save
+  if (name !== 'deliberation' && name !== 'marks' && _rendered[name] && _data) return;
+  if (name === 'marks' && _rendered[name] && _data && !(opts && opts.backgroundRefresh)) return;
   if (_data) _rendered[name] = true;
   switch(name) {
     case 'overview':     renderOverview(); break;
     case 'courses':      renderCourses(); break;
-    case 'marks':        renderMarksEntry(); break;
+    case 'marks':        renderMarksEntry(opts); break;
     case 'discipline':   renderDiscipline(); break;
     case 'deliberation': renderDeliberation(); break;
     case 'profile':      renderProfile(); break;
@@ -2252,13 +2279,16 @@ function _getMyTeacherId() {
   return (_data && _data.teacherId) || '';
 }
 
-function renderMarksEntry() {
+function renderMarksEntry(opts) {
   if (!_data) return;
-  
-  // Hide focus pane if open
-  document.getElementById('focusPane').classList.remove('open');
-  document.getElementById('coursePickerContainer').style.display = '';
-  
+  opts = opts || {};
+
+  // Only close focus pane when navigating TO marks (not when called as background refresh)
+  if (!opts.backgroundRefresh) {
+    document.getElementById('focusPane').classList.remove('open');
+    document.getElementById('coursePickerContainer').style.display = '';
+  }
+
   var assignments = _data.assignments || [];
   var subjects    = _data.subjects || [];
   var classes     = _data.classes || [];
@@ -2271,15 +2301,11 @@ function renderMarksEntry() {
   var activeTerm = (_data.terms||[]).find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
   var termId = String(activeTerm.term_id || '');
 
-  var html = '';
-  myAssignments.forEach(function(a, idx) {
-    var cls   = classes.find(function(c){ return c.class_id === a.class_id; }) || {};
-    var subj  = subjects.find(function(s){ return s.subject_id === a.subject_id; }) || {};
-    var sps   = subparts.filter(function(sp){ return sp.subject_id === a.subject_id; });
-    var icon  = icons[idx % icons.length];
-    var clrCls= 'c'+(idx%5);
+  // ── First pass: compute progress for every assignment ──────────────────
+  var activeTerm0   = (_data.terms||[]).find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
+  var termId0       = String(activeTerm0.term_id || '');
 
-    // Marks for this assignment + active term
+  var cardMeta = myAssignments.map(function(a) {
     var mrows = marks.filter(function(m){
       return m.class_id===a.class_id && m.subject_id===a.subject_id && String(m.term_id)===termId;
     });
@@ -2287,26 +2313,8 @@ function renderMarksEntry() {
     var t2Open = mrows.some(function(m){ return String(m.test2_status).toUpperCase()==='OPEN'; });
     var exOpen = mrows.some(function(m){ return String(m.exam_status).toUpperCase()==='OPEN'; });
 
-    var activeTerm0   = (_data.terms||[]).find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
-    var termId0       = String(activeTerm0.term_id || '');
-    var termOrderMap0 = {};
-    (_data.terms||[]).forEach(function(t,i){ termOrderMap0[String(t.term_id).trim()] = i; });
-
-    var totalStudents = (_data.students||[]).filter(function(s){
-      if (s.class_id !== a.class_id) return false;
-      var ltStr = String(s.left_terms || '').trim();
-      if (ltStr && termId0) {
-        var leftArr = ltStr.split(',').map(function(x){ return x.trim(); });
-        if (leftArr.indexOf(termId0) !== -1) return false;
-      }
-      var jt = String(s.joined_term || '').trim();
-      if (jt && termId0) {
-        var jo = termOrderMap0[jt], to = termOrderMap0[termId0];
-        if (jo !== undefined && to !== undefined && jo > to) return false;
-      }
-      return true;
-    }).length;
-
+    // Active students for this class — include everyone except those who LEFT this term
+    var totalStudents = 0;
     var activeStudentIds0 = {};
     (_data.students||[]).forEach(function(s){
       if (s.class_id !== a.class_id) return;
@@ -2315,27 +2323,99 @@ function renderMarksEntry() {
         var leftArr = ltStr.split(',').map(function(x){ return x.trim(); });
         if (leftArr.indexOf(termId0) !== -1) return;
       }
-      var jt = String(s.joined_term || '').trim();
-      if (jt && termId0) {
-        var jo = termOrderMap0[jt], to = termOrderMap0[termId0];
-        if (jo !== undefined && to !== undefined && jo > to) return;
-      }
       activeStudentIds0[String(s.student_id)] = true;
+      totalStudents++;
     });
+
+    // Group rows by subpart so we can check each subpart's open cols independently
+    var subpartMeta = {};
+    mrows.forEach(function(m) {
+      var sp = String(m.subpart_id || '');
+      if (!subpartMeta[sp]) {
+        subpartMeta[sp] = {
+          t1Open: String(m.test1_status||'').toUpperCase() === 'OPEN',
+          t2Open: String(m.test2_status||'').toUpperCase() === 'OPEN',
+          exOpen: String(m.exam_status ||'').toUpperCase() === 'OPEN'
+        };
+      }
+    });
+    var spKeys = Object.keys(subpartMeta);
 
     var enteredSet = {};
-    mrows.forEach(function(m){
-      if (!activeStudentIds0[String(m.student_id)]) return;
-      var hasAny = (m.test1 !== '' && m.test1 !== null && m.test1 !== undefined)
-                || (m.test2 !== '' && m.test2 !== null && m.test2 !== undefined)
-                || (m.exam  !== '' && m.exam  !== null && m.exam  !== undefined);
-      if (hasAny) enteredSet[String(m.student_id)] = true;
-    });
+    if (spKeys.length === 0) {
+      // No mark rows at all — nobody filled
+    } else {
+      var rowIdx = {};
+      mrows.forEach(function(m){
+        rowIdx[String(m.student_id)+'|'+String(m.subpart_id||'')] = m;
+      });
+      Object.keys(activeStudentIds0).forEach(function(sid) {
+        var studentHasAny = false;
+        spKeys.forEach(function(sp) {
+          var sm = subpartMeta[sp];
+          var m  = rowIdx[sid + '|' + sp] || {};
+          if (sm.t1Open && m.test1 !== '' && m.test1 !== null && m.test1 !== undefined) studentHasAny = true;
+          if (sm.t2Open && m.test2 !== '' && m.test2 !== null && m.test2 !== undefined) studentHasAny = true;
+          if (sm.exOpen && m.exam  !== '' && m.exam  !== null && m.exam  !== undefined) studentHasAny = true;
+        });
+        var anyOpen = spKeys.some(function(sp){ var sm=subpartMeta[sp]; return sm.t1Open||sm.t2Open||sm.exOpen; });
+        if (anyOpen && studentHasAny) enteredSet[sid] = true;
+      });
+    }
     var enteredCnt = Object.keys(enteredSet).length;
     var pctFill    = totalStudents > 0 ? Math.min(100, Math.round((enteredCnt / totalStudents) * 100)) : 0;
-    var barColor   = pctFill === 100 ? 'var(--green)' : pctFill > 0 ? 'var(--blue)' : 'var(--line)';
+    var missing    = totalStudents - enteredCnt;
 
-    html += '<div class="course-card" onclick="openFocus('+idx+')">';
+    return {
+      t1Open:t1Open, t2Open:t2Open, exOpen:exOpen,
+      totalStudents:totalStudents, enteredCnt:enteredCnt,
+      pctFill:pctFill, missing:missing
+    };
+  });
+
+  // Determine card states:
+  // urgent     = started but incomplete (0% < pct < 100%) — red, clickable
+  // notStarted = nothing entered yet (pct === 0, has students) — amber, clickable
+  // blocked    = 100% complete but other cards need attention — greyed, non-clickable
+  var hasUrgent     = cardMeta.some(function(m){ return m.pctFill > 0 && m.pctFill < 100 && m.totalStudents > 0; });
+  var hasNotStarted = cardMeta.some(function(m){ return m.pctFill === 0 && m.totalStudents > 0; });
+  var hasAnyStarted = cardMeta.some(function(m){ return m.pctFill > 0 && m.totalStudents > 0; });
+  // Block complete cards only when urgent (started-but-incomplete) cards exist.
+  var anyNeedsWork = hasUrgent;
+
+  var html = '';
+  myAssignments.forEach(function(a, idx) {
+    var cls   = classes.find(function(c){ return c.class_id === a.class_id; }) || {};
+    var subj  = subjects.find(function(s){ return s.subject_id === a.subject_id; }) || {};
+    var sps   = subparts.filter(function(sp){ return sp.subject_id === a.subject_id; });
+    var icon  = icons[idx % icons.length];
+    var clrCls= 'c'+(idx%5);
+    var m     = cardMeta[idx];
+
+    var isUrgent     = m.pctFill > 0 && m.pctFill < 100 && m.totalStudents > 0;
+    var isNotStarted = m.pctFill === 0 && m.totalStudents > 0;
+    var isBlocked    = hasUrgent && !isUrgent;
+
+    var barColor = m.pctFill === 100 ? 'var(--green)' : m.pctFill > 0 ? 'var(--blue)' : 'var(--line)';
+
+    var cardClass = 'course-card'
+      + (isUrgent     ? ' urgent'      : '')
+      + (isNotStarted ? ' not-started' : '')
+      + (isBlocked    ? ' blocked'     : '');
+    var clickAttr = isBlocked ? '' : ' onclick="openFocus('+idx+')"';
+
+    html += '<div class="'+cardClass+'"'+clickAttr+'>';
+
+    if (isUrgent) {
+      html += '<div class="course-card-warn">⚠ '+m.missing+' Student'+(m.missing>1?'s':'')+' Missing Marks</div>';
+    }
+    if (isNotStarted) {
+      html += '<div class="course-card-warn amber">⚠ Not Started Yet</div>';
+    }
+    if (isBlocked) {
+      html += '<div class="course-card-lock">🔒 Complete pending first</div>';
+    }
+
     html += '<div class="course-card-top">';
     html += '<div class="course-card-icon '+clrCls+'">'+icon+'</div>';
     html += '<div><div class="course-card-name">'+esc(subj.Name||'Unknown')+'</div>';
@@ -2344,19 +2424,19 @@ function renderMarksEntry() {
     // Progress bar
     html += '<div style="margin:8px 0 10px">';
     html += '<div style="display:flex;justify-content:space-between;font-size:10.5px;font-weight:700;color:var(--muted);margin-bottom:4px">';
-    html += '<span>'+enteredCnt+' / '+totalStudents+' students entered</span>';
-    html += '<span style="color:'+(pctFill===100?'var(--green)':pctFill>0?'var(--blue)':'var(--faint)')+'">'+pctFill+'%</span>';
+    html += '<span>'+m.enteredCnt+' / '+m.totalStudents+' students entered</span>';
+    html += '<span style="color:'+(m.pctFill===100?'var(--green)':m.pctFill>0?'var(--blue)':'var(--faint)')+'">'+m.pctFill+'%</span>';
     html += '</div>';
     html += '<div style="height:5px;background:var(--line);border-radius:99px;overflow:hidden">';
-    html += '<div style="height:100%;width:'+pctFill+'%;background:'+barColor+';border-radius:99px;transition:width .4s"></div>';
+    html += '<div class="cc-prog-bar-fill" style="height:100%;width:'+m.pctFill+'%;background:'+barColor+';border-radius:99px;transition:width .4s"></div>';
     html += '</div></div>';
     // Status chips
     html += '<div class="course-card-meta">';
-    html += '<span class="course-chip-sm '+(t1Open?'open':'closed')+'">Test 1</span>';
-    html += '<span class="course-chip-sm '+(t2Open?'open':'closed')+'">Test 2</span>';
-    html += '<span class="course-chip-sm '+(exOpen?'open':'closed')+'">Exam</span>';
+    html += '<span class="course-chip-sm '+(m.t1Open?'open':'closed')+'">Test 1</span>';
+    html += '<span class="course-chip-sm '+(m.t2Open?'open':'closed')+'">Test 2</span>';
+    html += '<span class="course-chip-sm '+(m.exOpen?'open':'closed')+'">Exam</span>';
     if (sps.length) html += '<span class="course-chip-sm">'+sps.length+' components</span>';
-    html += '<span class="course-chip-sm">'+totalStudents+' students</span>';
+    html += '<span class="course-chip-sm">'+m.totalStudents+' students</span>';
     html += '</div></div>';
   });
 
@@ -2436,18 +2516,43 @@ function openFocus(assignIdx) {
   setTimeout(_updateFocusProgressBar, 0);
 }
 
+var _discardTarget = null; // stores callback to run after confirmed discard
+
 function closeFocus() {
+  var hasDirty = Object.keys(_focus.dirty || {}).length > 0;
+  if (hasDirty) {
+    _discardTarget = _doCloseFocus;
+    document.getElementById('discardModal').classList.add('open');
+    return;
+  }
+  _doCloseFocus();
+}
+
+function _doCloseFocus() {
   document.getElementById('focusPane').classList.remove('open');
   document.body.style.overflow = '';
   document.getElementById('coursePickerContainer').style.display = '';
   _focus.dirty = {};
-  // Clean up any floating error tips
   document.querySelectorAll('.mark-err-tip').forEach(function(t){ t.remove(); });
   _errTips = {};
 }
 
+function closeDiscardModal() {
+  document.getElementById('discardModal').classList.remove('open');
+  _discardTarget = null;
+}
+
+function confirmDiscard() {
+  document.getElementById('discardModal').classList.remove('open');
+  if (typeof _discardTarget === 'function') { _discardTarget(); _discardTarget = null; }
+}
+
 document.addEventListener('keydown', function(e){
-  if (e.key === 'Escape' && document.getElementById('focusPane').classList.contains('open')) closeFocus();
+  if (e.key === 'Escape') {
+    if (document.getElementById('discardModal').classList.contains('open')) { closeDiscardModal(); return; }
+    if (document.getElementById('focusPane').classList.contains('open')) { closeFocus(); return; }
+    if (document.getElementById('p6FocusPane') && document.getElementById('p6FocusPane').classList.contains('open')) { p6BackToPicker(); return; }
+  }
 });
 
 /* ── Build subpart tab bar ── */
@@ -3280,7 +3385,7 @@ function saveAllChanges() {
       _clearQueue();
       showToast('Saved successfully ✓ (' + savedCount + ' marks)','ok');
       _renderFocusPage();
-      if (typeof renderMarksEntry === 'function') { try { renderMarksEntry(); } catch(e){} }
+      if (typeof renderMarksEntry === 'function') { try { renderMarksEntry({ backgroundRefresh: true }); } catch(e){} }
       return;
     }
     var chunk   = chunks[idx];
@@ -3333,7 +3438,7 @@ window.addEventListener('online', function() {
       _clearQueue();
       showToast('Sync complete ✓','ok');
       if (_focus && _focus.students && _focus.students.length) _renderFocusPage();
-      if (typeof renderMarksEntry === 'function') renderMarksEntry();
+      if (typeof renderMarksEntry === 'function') renderMarksEntry({ backgroundRefresh: true });
       return;
     }
     updateSaveBar(Math.round((syncIdx / syncChunks.length) * 88), 'Syncing chunk ' + (syncIdx+1) + ' of ' + syncChunks.length + '…');
@@ -4550,27 +4655,15 @@ function renderP6Weekly() {
 
   var terms      = _data.terms || [];
   var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms[0] || {};
-  _p6.classId   = _data.p6ClassId  || '';
+  _p6.classId   = _data.p6ClassId   || '';
   _p6.subjectId = _data.p6SubjectId || '';
   _p6.termId    = String(activeTerm.term_id || '');
-  _p6.teacherId = _data.teacherId  || '';
+  _p6.teacherId = _data.teacherId   || '';
   _p6.dirty     = {};
-
-  // Term badge
-  var badge = document.getElementById('p6-term-badge');
-  if (badge) badge.textContent = activeTerm.name ? 'Term: ' + activeTerm.name : '';
-
-  // Subject badge
-  var subBadgeWrap = document.getElementById('p6-subject-badge-wrap');
-  if (subBadgeWrap) {
-    subBadgeWrap.innerHTML = _p6.subjectId
-      ? '<span style="display:inline-block;font-size:11px;font-weight:700;color:var(--purple,#7c3aed);background:#f5f3ff;padding:3px 10px;border-radius:99px;border:1px solid #ddd6fe">Your subject: ' + esc(_p6.subjectId) + '</span>'
-      : '<span style="display:inline-block;font-size:11px;font-weight:700;color:var(--amber);background:#fffbeb;padding:3px 10px;border-radius:99px;border:1px solid #fde68a">No subject assigned — contact admin</span>';
-  }
 
   // Update subtitle
   var sub = document.getElementById('p6-page-subtitle');
-  if (sub) sub.textContent = _p6.subjectId ? 'Your subject: ' + _p6.subjectId : 'P6 Weekly Marks';
+  if (sub) sub.textContent = _p6.subjectId ? 'Your subject: ' + _p6.subjectId : 'Select a week to enter scores';
 
   if (!_p6.classId || !_p6.termId) {
     var grid = document.getElementById('p6-week-grid');
@@ -4582,19 +4675,19 @@ function renderP6Weekly() {
   if (grid) grid.innerHTML = '<div class="empty-state" style="padding:40px 0"><div class="spinner" style="margin:0 auto"></div></div>';
 
   _gasGet('p6GetWeeklyDataForTeacher',{classId:_p6.classId,termId:_p6.termId,subjectId:_p6.subjectId}).then(function(res) {
-      if (!res || !res.ok) {
-        if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-text">' + esc(res && res.error || 'Error') + '</div></div>';
-        return;
-      }
-      _p6.students     = res.students     || [];
-      _p6.subjects     = res.subjects     || [];   // only teacher's subject
-      _p6.subjectId    = res.subjectId    || _p6.subjectId;
-      _p6.maxScore     = res.maxScore     || 100;
-      _p6.existing     = res.existing     || [];
-      _p6.weeks        = res.weeks        || [];
-      _p6.weekProgress = res.weekProgress || {};
-      _p6RenderWeekPicker();
-    })
+    if (!res || !res.ok) {
+      if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-text">' + esc((res && res.error) || 'Error loading data') + '</div></div>';
+      return;
+    }
+    _p6.students     = res.students     || [];
+    _p6.subjects     = res.subjects     || [];
+    _p6.subjectId    = res.subjectId    || _p6.subjectId;
+    _p6.maxScore     = res.maxScore     || 100;
+    _p6.existing     = res.existing     || [];
+    _p6.weeks        = res.weeks        || [];
+    _p6.weekProgress = res.weekProgress || {};
+    _p6RenderWeekPicker();
+  });
 }
 
 function _p6RenderWeekPicker() {
@@ -4634,15 +4727,32 @@ function p6OpenWeek(weekLabel) {
   _p6.weekLabel = weekLabel;
   _p6.dirty     = {};
 
+  // Hide week picker, open focus pane
   document.getElementById('p6-week-picker').style.display = 'none';
-  document.getElementById('p6-week-entry-pane').classList.add('open');
-  document.getElementById('p6-entry-title').textContent = '📅 ' + weekLabel;
+  document.getElementById('p6FocusPane').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Set focus bar title + meta
+  var titleEl = document.getElementById('p6FocusTitle');
+  if (titleEl) titleEl.textContent = '📅 ' + weekLabel;
 
   var terms      = _data.terms || [];
   var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
-  var className  = (_data.allClasses || _data.classes || []).filter(function(c){ return String(c.class_id)===_p6.classId; }).map(function(c){ return c.Name||c.name||''; })[0] || '';
-  document.getElementById('p6-entry-meta').textContent =
-    [className, activeTerm.name ? activeTerm.name : '', _p6.subjectId ? 'Subject: ' + _p6.subjectId : ''].filter(Boolean).join('  ·  ');
+  var className  = (_data.allClasses || _data.classes || [])
+    .filter(function(c){ return String(c.class_id) === _p6.classId; })
+    .map(function(c){ return c.Name || c.name || ''; })[0] || '';
+  var metaEl = document.getElementById('p6FocusMeta');
+  if (metaEl) metaEl.textContent = [className, activeTerm.name || '', _p6.subjectId ? 'Subject: ' + _p6.subjectId : ''].filter(Boolean).join('  ·  ');
+
+  // Reset save button + dirty badge
+  var btn = document.getElementById('p6-save-btn');
+  if (btn) { btn.disabled = true; }
+  var dc = document.getElementById('p6-dirty-count');
+  if (dc) dc.style.display = 'none';
+
+  // Reset search
+  var si = document.getElementById('p6SearchInput');
+  if (si) si.value = '';
 
   _p6RenderScoreTable();
   _p6UpdateChips();
@@ -4650,13 +4760,20 @@ function p6OpenWeek(weekLabel) {
 
 function p6BackToPicker() {
   if (Object.keys(_p6.dirty).length > 0) {
-    if (!window.confirm('You have unsaved changes. Discard and go back?')) return;
+    _discardTarget = _doP6Back;
+    document.getElementById('discardModal').classList.add('open');
+    return;
   }
+  _doP6Back();
+}
+
+function _doP6Back() {
   _p6.dirty = {};
-  document.getElementById('p6-week-entry-pane').classList.remove('open');
+  document.getElementById('p6FocusPane').classList.remove('open');
+  document.body.style.overflow = '';
   document.getElementById('p6-week-picker').style.display = '';
   var btn = document.getElementById('p6-save-btn');
-  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+  if (btn) { btn.disabled = true; }
   var dc = document.getElementById('p6-dirty-count');
   if (dc) dc.style.display = 'none';
   var si = document.getElementById('p6SearchInput');
@@ -4808,7 +4925,7 @@ function p6OnInput(input) {
   var cnt = Object.keys(_p6.dirty).length;
   var btn = document.getElementById('p6-save-btn');
   var dc  = document.getElementById('p6-dirty-count');
-  if (btn) { btn.disabled = cnt === 0; btn.style.opacity = cnt > 0 ? '1' : '.5'; }
+  if (btn) { btn.disabled = cnt === 0; }
   if (dc)  { dc.style.display = cnt > 0 ? '' : 'none'; dc.textContent = '● ' + cnt + ' unsaved'; }
   _p6UpdateChips();
 }
@@ -4862,7 +4979,7 @@ function p6SaveScores() {
       }
       showToast('✓ Saved — ' + (res.inserted||0) + ' new, ' + (res.updated||0) + ' updated', 'ok');
       _p6.dirty = {};
-      if (btn) btn.style.opacity = '.5';
+      if (btn) btn.disabled = true;
       var dc = document.getElementById('p6-dirty-count');
       if (dc) dc.style.display = 'none';
 
