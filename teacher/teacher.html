@@ -566,6 +566,19 @@
     ══════════════════════════════════ */
     #focusPane,#discFocusPane,#p6FocusPane{display:none;position:fixed;top:56px;left:200px;right:0;bottom:0;background:var(--white);z-index:400;flex-direction:column;overflow:hidden;border-left:1px solid var(--line)}
     #focusPane.open,#discFocusPane.open,#p6FocusPane.open{display:flex}
+    /* Adjust focus panes when sidebar is collapsed to icon-rail width */
+    .app.sidebar-collapsed ~ #focusPane,
+    .app.sidebar-collapsed ~ #discFocusPane,
+    .app.sidebar-collapsed ~ #p6FocusPane,
+    body.sidebar-collapsed #focusPane,
+    body.sidebar-collapsed #discFocusPane,
+    body.sidebar-collapsed #p6FocusPane { left:64px }
+    @media(max-width:900px){
+      #focusPane,#discFocusPane,#p6FocusPane{left:64px}
+    }
+    @media(max-width:600px){
+      #focusPane,#discFocusPane,#p6FocusPane{top:0;left:0;z-index:800}
+    }
 
     /* focus topbar */
     .focus-bar{display:flex;align-items:center;gap:12px;padding:0 20px;height:52px;border-bottom:1.5px solid var(--line);background:var(--white);flex-shrink:0}
@@ -2535,7 +2548,19 @@ function openFocus(assignIdx) {
   _focus.assignment = a;
   _focus.subparts   = tabs;
   _focus.students   = classStudentsSorted;
-  _focus.marks      = marks.filter(function(m){ return String(m.class_id)===String(a.class_id) && String(m.subject_id)===String(a.subject_id) && String(m.term_id)===String(activeTerm.term_id); });
+  // Filter marks for this class+subject+term; if no active term id, include ALL marks for class+subject
+  var activeTermId = String(activeTerm.term_id || '');
+  var filteredMarks = marks.filter(function(m){
+    return String(m.class_id)===String(a.class_id) && String(m.subject_id)===String(a.subject_id)
+      && (!activeTermId || String(m.term_id)===activeTermId);
+  });
+  // If still empty (term mismatch), fall back to all marks for this class+subject so table renders
+  if (!filteredMarks.length) {
+    filteredMarks = marks.filter(function(m){
+      return String(m.class_id)===String(a.class_id) && String(m.subject_id)===String(a.subject_id);
+    });
+  }
+  _focus.marks      = filteredMarks;
   _focus.activeTerm = activeTerm;
   _focus.activeTab  = 0;
   _focus.page       = 1;
@@ -2558,7 +2583,8 @@ function openFocus(assignIdx) {
   // Build tabs
   _renderFocusTabs();
 
-  // Open pane
+  // Sync position with sidebar state, then open pane
+  _syncFocusPaneOffsets();
   document.getElementById('focusPane').classList.add('open');
   document.body.style.overflow = 'hidden';
 
@@ -2657,11 +2683,11 @@ function renderFocusTab(tabIdx) {
   var allMarks = _focus.marks;
   var spMarks  = isAll ? allMarks : allMarks.filter(function(m){ return String(m.subpart_id||'')===spId; });
 
-  // Status from sample mark
+  // Status from sample mark — prefer subpart-specific, then any mark, then default OPEN so table is usable
   var sampleMark = spMarks[0] || allMarks[0] || {};
-  var t1Status = String(sampleMark.test1_status||'CLOSED').toUpperCase();
-  var t2Status = String(sampleMark.test2_status||'CLOSED').toUpperCase();
-  var exStatus = String(sampleMark.exam_status||'CLOSED').toUpperCase();
+  var t1Status = sampleMark.test1_status ? String(sampleMark.test1_status).toUpperCase() : 'OPEN';
+  var t2Status = sampleMark.test2_status ? String(sampleMark.test2_status).toUpperCase() : 'OPEN';
+  var exStatus = sampleMark.exam_status  ? String(sampleMark.exam_status).toUpperCase()  : 'OPEN';
   var anyOpen  = t1Status==='OPEN'||t2Status==='OPEN'||exStatus==='OPEN';
 
   document.getElementById('bannerClosed').style.display   = anyOpen ? 'none' : 'flex';
@@ -3599,6 +3625,22 @@ function _profileErr(msg) {
   errEl.style.display = 'block';
 }
 
+/* ── Sync focus pane positions with current sidebar width ── */
+function _syncFocusPaneOffsets() {
+  var app = document.querySelector('.app');
+  var isCollapsed = !app || app.classList.contains('sidebar-collapsed');
+  var isMobile = window.innerWidth <= 600;
+  var top  = isMobile ? '0px' : '56px';
+  var left = isMobile ? '0px' : (isCollapsed ? '64px' : '200px');
+  ['focusPane','discFocusPane','p6FocusPane'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.style.top  = top;
+    el.style.left = left;
+  });
+}
+window.addEventListener('resize', _syncFocusPaneOffsets);
+
 /* ════════════════════════════
    NAVIGATION
 ════════════════════════════ */
@@ -3748,7 +3790,8 @@ function openDiscFocus() {
   // Index saved records for this class + active term
   _disc.records = {};
   disc.forEach(function(d){
-    if (String(d.term_id) === termId && String(d.class_id) === String(_disc.classId)) {
+    var matchTerm = !termId || String(d.term_id) === termId;
+    if (matchTerm && String(d.class_id) === String(_disc.classId)) {
       _disc.records[String(d.student_id)] = d;
     }
   });
@@ -3766,6 +3809,7 @@ function openDiscFocus() {
 
   // Show focus pane
   document.getElementById('discPickerContainer').style.display = 'none';
+  _syncFocusPaneOffsets();
   document.getElementById('discFocusPane').classList.add('open');
   document.body.style.overflow = 'hidden';
 
@@ -4642,10 +4686,8 @@ function emptyRow(cols, msg) {
 /* ════════════ SIDEBAR COLLAPSE ════════════ */
 function toggleSidebar() {
   var app = document.querySelector('.app');
-  var collapsed = app.classList.toggle('sidebar-collapsed');
-  // Keep focus pane aligned
-  var fp = document.getElementById('focusPane');
-  if (fp) fp.style.left = collapsed ? '64px' : '200px';
+  app.classList.toggle('sidebar-collapsed');
+  _syncFocusPaneOffsets();
 }
 
 /* ════════════ MOBILE NAV ════════════ */
