@@ -2140,6 +2140,17 @@ function onBatchLoaded(data) {
   var _safetyTimer = setTimeout(function(){ hideLoading(); }, 8000);
   try {
     _data = data || {};
+    // Debug: log key counts to console so issues are visible
+    console.log('[AcademEase] Batch loaded — assignments:', (_data.assignments||[]).length,
+      '| students:', (_data.students||[]).length,
+      '| marks:', (_data.marks||[]).length,
+      '| terms:', (_data.terms||[]).length,
+      '| classes:', (_data.classes||[]).length,
+      '| teacherId:', _data.teacherId,
+      '| teacherClassId:', _data.teacherClassId,
+      '| ok:', _data.ok !== false
+    );
+    if (_data.error) console.error('[AcademEase] Server error:', _data.error);
     renderAll();
   } catch(e) {
     console.error('renderAll crashed:', e);
@@ -2235,7 +2246,7 @@ function renderStats() {
   var assignedClassIds = assignments.map(function(a){ return a.class_id; });
   var myStudents = students.filter(function(s){ return assignedClassIds.indexOf(s.class_id) !== -1; });
 
-  var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
+  var activeTerm = terms.find(function(t){ var _v=String(t.is_active||'').toLowerCase().trim(); return _v==='true'||_v==='1'||_v==='yes'; }) || {};
   var termId = activeTerm.term_id || '';
   var pendingCount = marks.filter(function(m){ return String(m.term_id)===String(termId) && (!m.test1 || !m.exam); }).length;
 
@@ -2276,9 +2287,10 @@ function renderOverview() {
 
   // Assigned courses table (limit 8 for overview)
   var rows = assignments.slice(0,8).map(function(a){
-    var cls = classes.find(function(c){ return c.class_id === a.class_id; }) || {};
-    var subj = subjects.find(function(s){ return s.subject_id === a.subject_id; }) || {};
-    var cnt = students.filter(function(st){ return st.class_id === a.class_id; }).length;
+    var _roCid = String(a.class_id || ''); var _roSid = String(a.subject_id || '');
+    var cls = classes.find(function(c){ return String(c.class_id)   === _roCid; }) || {};
+    var subj = subjects.find(function(s){ return String(s.subject_id) === _roSid; }) || {};
+    var cnt = students.filter(function(st){ return String(st.class_id) === _roCid; }).length;
     return '<tr><td>'+esc(cls.Name||'N/A')+'</td><td>'+esc(subj.Name||'N/A')+'</td><td>'+cnt+'</td><td><span class="tag active"><span class="tag-dot"></span>Active</span></td></tr>';
   }).join('');
   document.getElementById('tbl-courses').innerHTML = rows || emptyRow(4,'No courses assigned');
@@ -2292,9 +2304,10 @@ function renderCourses() {
   var students = _data.students || [];
   var classes = _data.classes || [];
   var rows = assignments.map(function(a){
-    var cls = classes.find(function(c){ return c.class_id === a.class_id; }) || {};
-    var subj = subjects.find(function(s){ return s.subject_id === a.subject_id; }) || {};
-    var cnt = students.filter(function(st){ return st.class_id === a.class_id; }).length;
+    var _rcCid = String(a.class_id || ''); var _rcSid = String(a.subject_id || '');
+    var cls = classes.find(function(c){ return String(c.class_id)   === _rcCid; }) || {};
+    var subj = subjects.find(function(s){ return String(s.subject_id) === _rcSid; }) || {};
+    var cnt = students.filter(function(st){ return String(st.class_id) === _rcCid; }).length;
     return '<tr><td>'+esc(cls.Name||'N/A')+'</td><td>'+esc(subj.Name||'N/A')+'</td><td>'+cnt+'</td></tr>';
   }).join('');
   document.getElementById('tbl-allCourses').innerHTML = rows || emptyRow(4,'No courses assigned');
@@ -2363,26 +2376,36 @@ function renderMarksEntry(opts) {
   // Server already filtered assignments to this teacher only
   var myAssignments = assignments;
 
-  var activeTerm = (_data.terms||[]).find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
+  var _findActiveTerm = function(terms){ return (terms||[]).find(function(t){ var v=String(t.is_active||'').toLowerCase().trim(); return v==='true'||v==='1'||v==='yes'; }) || (terms||[])[0] || {}; };
+  var activeTerm = _findActiveTerm(_data.terms);
   var termId = String(activeTerm.term_id || '');
 
   // ── First pass: compute progress for every assignment ──────────────────
-  var activeTerm0   = (_data.terms||[]).find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
-  var termId0       = String(activeTerm0.term_id || '');
+  var activeTerm0 = activeTerm;
+  var termId0     = termId;
 
   var cardMeta = myAssignments.map(function(a) {
+    var aCid = String(a.class_id  || '');
+    var aSid = String(a.subject_id || '');
     var mrows = marks.filter(function(m){
-      return String(m.class_id)===String(a.class_id) && String(m.subject_id)===String(a.subject_id) && String(m.term_id)===termId;
+      return String(m.class_id)===aCid && String(m.subject_id)===aSid
+        && (!termId || String(m.term_id)===termId);
     });
-    var t1Open = mrows.some(function(m){ return String(m.test1_status).toUpperCase()==='OPEN'; });
-    var t2Open = mrows.some(function(m){ return String(m.test2_status).toUpperCase()==='OPEN'; });
-    var exOpen = mrows.some(function(m){ return String(m.exam_status).toUpperCase()==='OPEN'; });
+    // Fallback: no marks for active term — include any marks for this class+subject so cards show
+    if (!mrows.length) {
+      mrows = marks.filter(function(m){
+        return String(m.class_id)===aCid && String(m.subject_id)===aSid;
+      });
+    }
+    var t1Open = mrows.some(function(m){ return String(m.test1_status||'').toUpperCase()==='OPEN'; });
+    var t2Open = mrows.some(function(m){ return String(m.test2_status||'').toUpperCase()==='OPEN'; });
+    var exOpen = mrows.some(function(m){ return String(m.exam_status ||'').toUpperCase()==='OPEN'; });
 
     // Active students for this class — include everyone except those who LEFT this term
     var totalStudents = 0;
     var activeStudentIds0 = {};
     (_data.students||[]).forEach(function(s){
-      if (s.class_id !== a.class_id) return;
+      if (String(s.class_id) !== aCid) return;  // FIX: always compare as strings
       var ltStr = String(s.left_terms || '').trim();
       if (ltStr && termId0) {
         var leftArr = ltStr.split(',').map(function(x){ return x.trim(); });
@@ -2450,16 +2473,20 @@ function renderMarksEntry(opts) {
 
   var html = '';
   myAssignments.forEach(function(a, idx) {
-    var cls   = classes.find(function(c){ return c.class_id === a.class_id; }) || {};
-    var subj  = subjects.find(function(s){ return s.subject_id === a.subject_id; }) || {};
-    var sps   = subparts.filter(function(sp){ return sp.subject_id === a.subject_id; });
+    var aCid2 = String(a.class_id  || '');
+    var aSid2 = String(a.subject_id || '');
+    var cls   = classes.find(function(c){ return String(c.class_id)  === aCid2; }) || {};
+    var subj  = subjects.find(function(s){ return String(s.subject_id) === aSid2; }) || {};
+    var sps   = subparts.filter(function(sp){ return String(sp.subject_id) === aSid2; });
     var icon  = icons[idx % icons.length];
     var clrCls= 'c'+(idx%5);
     var m     = cardMeta[idx];
 
     var isUrgent     = m.pctFill > 0 && m.pctFill < 100 && m.totalStudents > 0;
     var isNotStarted = m.pctFill === 0 && m.totalStudents > 0;
-    var isBlocked    = hasUrgent && !isUrgent;
+    // Only block a card if it's 100% complete AND other cards still have urgent work
+    // Never block cards with no students (they'd vanish entirely)
+    var isBlocked    = hasUrgent && !isUrgent && m.totalStudents > 0 && m.pctFill === 100;
 
     var barColor = m.pctFill === 100 ? 'var(--green)' : m.pctFill > 0 ? 'var(--blue)' : 'var(--line)';
 
@@ -2524,12 +2551,15 @@ function openFocus(assignIdx) {
   var a = myAssignments[assignIdx];
   if (!a) return;
 
-  var cls  = classes.find(function(c){ return c.class_id===a.class_id; }) || {};
-  var subj = subjects.find(function(s){ return s.subject_id===a.subject_id; }) || {};
-  var sps  = subparts.filter(function(sp){ return sp.subject_id===a.subject_id; });
-  var activeTerm0 = (_data.terms||[]).find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
+  var _fCid = String(a.class_id  || '');
+  var _fSid = String(a.subject_id || '');
+  var cls  = classes.find(function(c){ return String(c.class_id)   === _fCid; }) || {};
+  var subj = subjects.find(function(s){ return String(s.subject_id) === _fSid; }) || {};
+  var sps  = subparts.filter(function(sp){ return String(sp.subject_id) === _fSid; });
+  var activeTerm0 = (_data.terms||[]).find(function(t){ var v=String(t.is_active||'').toLowerCase().trim(); return v==='true'||v==='1'||v==='yes'; }) || (_data.terms||[])[0] || {};
+  var _ocCid = String(a.class_id || '');
   var classStudents = students.filter(function(s){
-    if (s.class_id !== a.class_id) return false;
+    if (String(s.class_id) !== _ocCid) return false;
     // Exclude students who left this term
     var lt = String(s.left_terms || '').trim();
     if (lt && activeTerm0.term_id) {
@@ -2551,13 +2581,13 @@ function openFocus(assignIdx) {
   // Filter marks for this class+subject+term; if no active term id, include ALL marks for class+subject
   var activeTermId = String(activeTerm.term_id || '');
   var filteredMarks = marks.filter(function(m){
-    return String(m.class_id)===String(a.class_id) && String(m.subject_id)===String(a.subject_id)
+    return String(m.class_id)===_fCid && String(m.subject_id)===_fSid
       && (!activeTermId || String(m.term_id)===activeTermId);
   });
   // If still empty (term mismatch), fall back to all marks for this class+subject so table renders
   if (!filteredMarks.length) {
     filteredMarks = marks.filter(function(m){
-      return String(m.class_id)===String(a.class_id) && String(m.subject_id)===String(a.subject_id);
+      return String(m.class_id)===_fCid && String(m.subject_id)===_fSid;
     });
   }
   _focus.marks      = filteredMarks;
@@ -3713,7 +3743,7 @@ function renderDiscipline() {
   var students       = _data.students       || [];
   var disc           = _data.discipline     || [];
   var terms          = _data.terms          || [];
-  var activeTerm     = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms[0] || {};
+  var activeTerm     = terms.find(function(t){ var _v=String(t.is_active||'').toLowerCase().trim(); return _v==='true'||_v==='1'||_v==='yes'; }) || terms[0] || {};
   var termId         = String(activeTerm.term_id || '');
 
   // Resolve homeroom class
@@ -3770,7 +3800,7 @@ function openDiscFocus() {
   var students       = _data.students       || [];
   var disc           = _data.discipline     || [];
   var terms          = _data.terms          || [];
-  var activeTerm     = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms[0] || {};
+  var activeTerm     = terms.find(function(t){ var _v=String(t.is_active||'').toLowerCase().trim(); return _v==='true'||_v==='1'||_v==='yes'; }) || terms[0] || {};
   var termId         = String(activeTerm.term_id || '');
 
   var myClass = teacherClassId
@@ -4014,7 +4044,7 @@ function saveDiscMarks() {
   if (!dirtyKeys.length) return;
 
   var terms      = _data.terms || [];
-  var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms[0] || {};
+  var activeTerm = terms.find(function(t){ var _v=String(t.is_active||'').toLowerCase().trim(); return _v==='true'||_v==='1'||_v==='yes'; }) || terms[0] || {};
   var termId     = String(activeTerm.term_id || '');
   var teacherId  = String(_data.teacherId    || '');
 
@@ -4748,7 +4778,7 @@ function renderP6Weekly() {
   if (!_data || !_data.isP6Teacher) return;
 
   var terms      = _data.terms || [];
-  var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms[0] || {};
+  var activeTerm = terms.find(function(t){ var _v=String(t.is_active||'').toLowerCase().trim(); return _v==='true'||_v==='1'||_v==='yes'; }) || terms[0] || {};
   _p6.classId   = _data.p6ClassId   || '';
   _p6.subjectId = _data.p6SubjectId || '';
   _p6.termId    = String(activeTerm.term_id || '');
@@ -4831,7 +4861,7 @@ function p6OpenWeek(weekLabel) {
   if (titleEl) titleEl.textContent = '📅 ' + weekLabel;
 
   var terms      = _data.terms || [];
-  var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
+  var activeTerm = terms.find(function(t){ var _v=String(t.is_active||'').toLowerCase().trim(); return _v==='true'||_v==='1'||_v==='yes'; }) || {};
   var className  = (_data.allClasses || _data.classes || [])
     .filter(function(c){ return String(c.class_id) === _p6.classId; })
     .map(function(c){ return c.Name || c.name || ''; })[0] || '';
