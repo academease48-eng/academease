@@ -566,9 +566,6 @@
     ══════════════════════════════════ */
     #focusPane,#discFocusPane,#p6FocusPane{display:none;position:fixed;top:56px;left:200px;right:0;bottom:0;background:var(--white);z-index:400;flex-direction:column;overflow:hidden;border-left:1px solid var(--line)}
     #focusPane.open,#discFocusPane.open,#p6FocusPane.open{display:flex}
-    .app.sidebar-collapsed ~ #focusPane,.app.sidebar-collapsed ~ #discFocusPane,.app.sidebar-collapsed ~ #p6FocusPane{left:64px}
-    @media(max-width:900px){#focusPane,#discFocusPane,#p6FocusPane{left:64px}}
-    @media(max-width:600px){#focusPane,#discFocusPane,#p6FocusPane{top:0;left:0;z-index:800}}
 
     /* focus topbar */
     .focus-bar{display:flex;align-items:center;gap:12px;padding:0 20px;height:52px;border-bottom:1.5px solid var(--line);background:var(--white);flex-shrink:0}
@@ -1277,13 +1274,8 @@
     /* ══════════════════════════════════
        P6 WEEKLY MARKS
     ══════════════════════════════════ */
-    /* Week card grid */
+    /* Week card grid — identical layout to Marks course-card grid */
     .p6-week-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;margin-bottom:24px}
-    .p6-week-card{background:var(--white);border:1.5px solid var(--line);border-radius:var(--r12);padding:18px 16px;cursor:pointer;transition:all .16s;box-shadow:var(--sh-sm);position:relative}
-    .p6-week-card:hover{border-color:var(--blue-m);box-shadow:var(--sh-md);transform:translateY(-2px)}
-    .p6-week-card-label{font-size:15px;font-weight:800;color:var(--ink);margin-bottom:5px;letter-spacing:-.2px}
-    .p6-week-card-meta{font-size:12px;color:var(--muted);font-weight:600}
-    .p6-week-card-saved{display:inline-block;margin-top:8px;font-size:11px;font-weight:700;color:var(--green);background:var(--green-l);padding:2px 8px;border-radius:99px;border:1px solid var(--green-m)}
 
     /* ── Discard modal ── */
     #discardModal{display:none;position:fixed;inset:0;z-index:9995;background:rgba(17,24,39,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px}
@@ -1919,49 +1911,33 @@
 </div>
 
 <script>
-/* ══ GitHub Pages: JSONP helper (bypasses CORS) ══ */
-var APPS_SCRIPT_URL = 'https://mute-smoke-c8ea.academease48.workers.dev';
-var _cbCount = 0;
+/* Cloudflare Worker URL - proxies all requests to GAS */
+var WORKER_URL = 'https://mute-smoke-c8ea.academease48.workers.dev';
+
+/* GET: WORKER_URL?action=...&key=val */
 function _gasGet(action, params) {
-  return new Promise(function(resolve, reject) {
-    var cb = '_gasCb' + (++_cbCount);
-    var url = APPS_SCRIPT_URL + '?callback=' + cb + '&action=' + encodeURIComponent(action);
-    if (params) Object.keys(params).forEach(function(k){
-      url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(String(params[k]||''));
-    });
-    var script = document.createElement('script');
-    var timer = setTimeout(function(){ cleanup(); reject(new Error('Timeout')); }, 30000);
-    function cleanup(){ delete window[cb]; document.head.removeChild(script); clearTimeout(timer); }
-    window[cb] = function(data){ cleanup(); resolve(data); };
-    script.onerror = function(){ cleanup(); reject(new Error('Network error')); };
-    script.src = url;
-    document.head.appendChild(script);
+  var url = WORKER_URL + '?action=' + encodeURIComponent(action);
+  Object.keys(params || {}).forEach(function(k) {
+    var v = (params[k] !== undefined && params[k] !== null) ? params[k] : '';
+    url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(v);
   });
+  return fetch(url).then(function(r) { return r.json(); });
 }
+
+/* POST: worker reads { action, data } from JSON body */
 function _gasPost(action, data) {
-  var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  var timeoutId  = controller
-    ? setTimeout(function() { controller.abort(); }, 90000)
-    : null;
-  return fetch(APPS_SCRIPT_URL, {
+  return fetch(WORKER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: action, data: data }),
-    signal: controller ? controller.signal : undefined
-  }).then(function(r) {
-    if (timeoutId) clearTimeout(timeoutId);
-    return r.json();
-  }).catch(function(err) {
-    if (timeoutId) clearTimeout(timeoutId);
-    if (err && err.name === 'AbortError') throw new Error('Request timed out — server is still saving, please wait and refresh.');
-    throw err;
-  });
+    body: JSON.stringify({ action: action, data: data || {} })
+  }).then(function(r) { return r.json(); });
 }
+
 /* page navigation */
-window._indexUrl = '../index.html';
+window._indexUrl = 'index.html';
 function _pageUrl(dest) {
-  var map = { index: '../index.html', dashboard: 'dashboard.html', teacher: 'teacher.html' };
-  return map[dest] || '../index.html';
+  if (dest === 'index' || dest === 'login') return 'index.html';
+  return dest + '.html';
 }
 
 /* ════════════════════════════
@@ -2087,33 +2063,32 @@ window.addEventListener('load', function() {
   // If NO role stored OR role is not TEACHER, redirect to login
   if (!storedRole || storedRole.toUpperCase() !== 'TEACHER') {
     var dest = 'index';
-    window.location.href = _pageUrl(dest);
+    window.location.href = _pageUrl(dest); // navigates to login
     return;
   }
   
   // Set user info from session immediately (no round-trip)
-  var name = sessionStorage.getItem('displayName')
-          || localStorage.getItem('ae_displayName')
-          || sessionStorage.getItem('userName')
-          || localStorage.getItem('ae_userName')
-          || 'Teacher';
+  var name = sessionStorage.getItem('userName') || localStorage.getItem('ae_userName') || 'Teacher';
   setUserDisplay(name);
 
-  // GitHub Pages — index URL is static
-  window._indexUrl = '../index.html';
+  // Set index URL for logout navigation
+  window._indexUrl = _pageUrl('index');
 
   showLoading('Loading your dashboard…', ['Verifying your account', 'Loading classes & subjects', 'Loading marks & discipline', 'Preparing your dashboard']);
 
-  // username (column F) is the key used to look up teacher assignments on the server
-  var _loginKey = sessionStorage.getItem('userName')
-               || localStorage.getItem('ae_userName')
-               || sessionStorage.getItem('userId')
+  // Defer GAS call by one frame so the progress modal has time to paint before the network call starts
+  // Read from sessionStorage first (set on fresh login), then localStorage fallback (survives reload/new tab)
+  var _loginKey = sessionStorage.getItem('userId')
+               || sessionStorage.getItem('user_id')
                || localStorage.getItem('ae_userId')
+               || localStorage.getItem('ae_user_id')
+               || sessionStorage.getItem('userName')
+               || localStorage.getItem('ae_userName')
                || '';
   setTimeout(function() {
     _gasGet('getTeacherBatchData', { userName: _loginKey })
-      .then(onBatchLoaded)
-      .catch(function(){ hideLoading(); showToast('Failed to load data', 'err'); });
+      .then(function(data) { onBatchLoaded(data); })
+      .catch(function() { hideLoading(); showToast('Failed to load data', 'err'); });
   }, 50);
 }, {once: true});
 
@@ -2126,17 +2101,9 @@ function setUserDisplay(name) {
 }
 
 function onBatchLoaded(data) {
-  var _safetyTimer = setTimeout(function(){ hideLoading(); }, 8000);
-  try {
-    _data = data || {};
-    console.log('[AcademEase] assignments:', (_data.assignments||[]).length,
-      'students:', (_data.students||[]).length, 'marks:', (_data.marks||[]).length,
-      'terms:', (_data.terms||[]).length, 'teacherId:', _data.teacherId,
-      'teacherClassId:', _data.teacherClassId);
-    if (_data.error) console.error('[AcademEase] Server error:', _data.error);
-    renderAll();
-  } catch(e) { console.error('renderAll crashed:', e); }
-  finally { clearTimeout(_safetyTimer); hideLoading(); }
+  _data = data || {};
+  renderAll();
+  hideLoading();
 }
 
 function renderAll() {
@@ -2227,7 +2194,7 @@ function renderStats() {
 
   var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
   var termId = activeTerm.term_id || '';
-  var pendingCount = marks.filter(function(m){ return m.term_id===termId && (!m.test1 || !m.exam); }).length;
+  var pendingCount = marks.filter(function(m){ return String(m.term_id)===String(termId) && (!m.test1 || !m.exam); }).length;
 
   document.getElementById('statCourses').textContent = uniqueCourses;
   document.getElementById('statStudents').textContent = myStudents.length;
@@ -2243,7 +2210,7 @@ function renderStats() {
 function renderSection(name, opts) {
   // Deliberation is never cached — it re-renders cards each time (fast, client-side)
   // Marks also re-renders when called with backgroundRefresh to update cards after save
-  if (name !== 'deliberation' && name !== 'marks' && _rendered[name] && _data) return;
+  if (name !== 'deliberation' && name !== 'discipline' && name !== 'marks' && _rendered[name] && _data) return;
   if (name === 'marks' && _rendered[name] && _data && !(opts && opts.backgroundRefresh)) return;
   if (_data) _rendered[name] = true;
   switch(name) {
@@ -2362,7 +2329,7 @@ function renderMarksEntry(opts) {
 
   var cardMeta = myAssignments.map(function(a) {
     var mrows = marks.filter(function(m){
-      return m.class_id===a.class_id && m.subject_id===a.subject_id && String(m.term_id)===termId;
+      return String(m.class_id)===String(a.class_id) && String(m.subject_id)===String(a.subject_id) && String(m.term_id)===termId;
     });
     var t1Open = mrows.some(function(m){ return String(m.test1_status).toUpperCase()==='OPEN'; });
     var t2Open = mrows.some(function(m){ return String(m.test2_status).toUpperCase()==='OPEN'; });
@@ -2372,7 +2339,7 @@ function renderMarksEntry(opts) {
     var totalStudents = 0;
     var activeStudentIds0 = {};
     (_data.students||[]).forEach(function(s){
-      if (s.class_id !== a.class_id) return;
+      if (String(s.class_id) !== String(a.class_id)) return;
       var ltStr = String(s.left_terms || '').trim();
       if (ltStr && termId0) {
         var leftArr = ltStr.split(',').map(function(x){ return x.trim(); });
@@ -2440,9 +2407,9 @@ function renderMarksEntry(opts) {
 
   var html = '';
   myAssignments.forEach(function(a, idx) {
-    var cls   = classes.find(function(c){ return c.class_id === a.class_id; }) || {};
-    var subj  = subjects.find(function(s){ return s.subject_id === a.subject_id; }) || {};
-    var sps   = subparts.filter(function(sp){ return sp.subject_id === a.subject_id; });
+    var cls   = classes.find(function(c){ return String(c.class_id) === String(a.class_id); }) || {};
+    var subj  = subjects.find(function(s){ return String(s.subject_id) === String(a.subject_id); }) || {};
+    var sps   = subparts.filter(function(sp){ return String(sp.subject_id) === String(a.subject_id); });
     var icon  = icons[idx % icons.length];
     var clrCls= 'c'+(idx%5);
     var m     = cardMeta[idx];
@@ -2514,12 +2481,12 @@ function openFocus(assignIdx) {
   var a = myAssignments[assignIdx];
   if (!a) return;
 
-  var cls  = classes.find(function(c){ return c.class_id===a.class_id; }) || {};
-  var subj = subjects.find(function(s){ return s.subject_id===a.subject_id; }) || {};
-  var sps  = subparts.filter(function(sp){ return sp.subject_id===a.subject_id; });
+  var cls  = classes.find(function(c){ return String(c.class_id)===String(a.class_id); }) || {};
+  var subj = subjects.find(function(s){ return String(s.subject_id)===String(a.subject_id); }) || {};
+  var sps  = subparts.filter(function(sp){ return String(sp.subject_id)===String(a.subject_id); });
   var activeTerm0 = (_data.terms||[]).find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
   var classStudents = students.filter(function(s){
-    if (s.class_id !== a.class_id) return false;
+    if (String(s.class_id) !== String(a.class_id)) return false;
     // Exclude students who left this term
     var lt = String(s.left_terms || '').trim();
     if (lt && activeTerm0.term_id) {
@@ -2538,11 +2505,7 @@ function openFocus(assignIdx) {
   _focus.assignment = a;
   _focus.subparts   = tabs;
   _focus.students   = classStudentsSorted;
-  // Filter marks for active term; if no active term id fall back to all marks for class+subject
-  var _fmTermId = activeTerm.term_id;
-  var _fmMarks = marks.filter(function(m){ return m.class_id===a.class_id && m.subject_id===a.subject_id && m.term_id===_fmTermId; });
-  if (!_fmMarks.length) _fmMarks = marks.filter(function(m){ return m.class_id===a.class_id && m.subject_id===a.subject_id; });
-  _focus.marks = _fmMarks;
+  _focus.marks      = marks.filter(function(m){ return String(m.class_id)===String(a.class_id) && String(m.subject_id)===String(a.subject_id) && String(m.term_id)===String(activeTerm.term_id); });
   _focus.activeTerm = activeTerm;
   _focus.activeTab  = 0;
   _focus.page       = 1;
@@ -2565,8 +2528,7 @@ function openFocus(assignIdx) {
   // Build tabs
   _renderFocusTabs();
 
-  // Sync pane position with current sidebar state, then open
-  _syncFocusPaneOffsets();
+  // Open pane
   document.getElementById('focusPane').classList.add('open');
   document.body.style.overflow = 'hidden';
 
@@ -2576,43 +2538,18 @@ function openFocus(assignIdx) {
   setTimeout(_updateFocusProgressBar, 0);
 }
 
-var _discardTarget = null; // stores callback to run after confirmed discard
-
 function closeFocus() {
-  var hasDirty = Object.keys(_focus.dirty || {}).length > 0;
-  if (hasDirty) {
-    _discardTarget = _doCloseFocus;
-    document.getElementById('discardModal').classList.add('open');
-    return;
-  }
-  _doCloseFocus();
-}
-
-function _doCloseFocus() {
   document.getElementById('focusPane').classList.remove('open');
   document.body.style.overflow = '';
   document.getElementById('coursePickerContainer').style.display = '';
   _focus.dirty = {};
+  // Clean up any floating error tips
   document.querySelectorAll('.mark-err-tip').forEach(function(t){ t.remove(); });
   _errTips = {};
 }
 
-function closeDiscardModal() {
-  document.getElementById('discardModal').classList.remove('open');
-  _discardTarget = null;
-}
-
-function confirmDiscard() {
-  document.getElementById('discardModal').classList.remove('open');
-  if (typeof _discardTarget === 'function') { _discardTarget(); _discardTarget = null; }
-}
-
 document.addEventListener('keydown', function(e){
-  if (e.key === 'Escape') {
-    if (document.getElementById('discardModal').classList.contains('open')) { closeDiscardModal(); return; }
-    if (document.getElementById('focusPane').classList.contains('open')) { closeFocus(); return; }
-    if (document.getElementById('p6FocusPane') && document.getElementById('p6FocusPane').classList.contains('open')) { p6BackToPicker(); return; }
-  }
+  if (e.key === 'Escape' && document.getElementById('focusPane').classList.contains('open')) closeFocus();
 });
 
 /* ── Build subpart tab bar ── */
@@ -2665,11 +2602,11 @@ function renderFocusTab(tabIdx) {
   var allMarks = _focus.marks;
   var spMarks  = isAll ? allMarks : allMarks.filter(function(m){ return String(m.subpart_id||'')===spId; });
 
-  // Status from sample mark — default OPEN when no rows exist so table is usable
+  // Status from sample mark
   var sampleMark = spMarks[0] || allMarks[0] || {};
-  var t1Status = sampleMark.test1_status ? String(sampleMark.test1_status).toUpperCase() : 'OPEN';
-  var t2Status = sampleMark.test2_status ? String(sampleMark.test2_status).toUpperCase() : 'OPEN';
-  var exStatus = sampleMark.exam_status  ? String(sampleMark.exam_status).toUpperCase()  : 'OPEN';
+  var t1Status = String(sampleMark.test1_status||'CLOSED').toUpperCase();
+  var t2Status = String(sampleMark.test2_status||'CLOSED').toUpperCase();
+  var exStatus = String(sampleMark.exam_status||'CLOSED').toUpperCase();
   var anyOpen  = t1Status==='OPEN'||t2Status==='OPEN'||exStatus==='OPEN';
 
   document.getElementById('bannerClosed').style.display   = anyOpen ? 'none' : 'flex';
@@ -3445,7 +3382,7 @@ function saveAllChanges() {
       _clearQueue();
       showToast('Saved successfully ✓ (' + savedCount + ' marks)','ok');
       _renderFocusPage();
-      if (typeof renderMarksEntry === 'function') { try { renderMarksEntry({ backgroundRefresh: true }); } catch(e){} }
+      if (typeof renderMarksEntry === 'function') { try { renderMarksEntry(); } catch(e){} }
       return;
     }
     var chunk   = chunks[idx];
@@ -3498,7 +3435,7 @@ window.addEventListener('online', function() {
       _clearQueue();
       showToast('Sync complete ✓','ok');
       if (_focus && _focus.students && _focus.students.length) _renderFocusPage();
-      if (typeof renderMarksEntry === 'function') renderMarksEntry({ backgroundRefresh: true });
+      if (typeof renderMarksEntry === 'function') renderMarksEntry();
       return;
     }
     updateSaveBar(Math.round((syncIdx / syncChunks.length) * 88), 'Syncing chunk ' + (syncIdx+1) + ' of ' + syncChunks.length + '…');
@@ -3753,11 +3690,10 @@ function openDiscFocus() {
   _disc.page      = 1;
   _disc.searchVal = '';
 
-  // Index saved records for this class + active term (guard: if no termId, include all)
+  // Index saved records for this class + active term
   _disc.records = {};
   disc.forEach(function(d){
-    var matchTerm = !termId || String(d.term_id) === termId;
-    if (matchTerm && String(d.class_id) === String(_disc.classId)) {
+    if (String(d.term_id) === termId && String(d.class_id) === String(_disc.classId)) {
       _disc.records[String(d.student_id)] = d;
     }
   });
@@ -3775,7 +3711,6 @@ function openDiscFocus() {
 
   // Show focus pane
   document.getElementById('discPickerContainer').style.display = 'none';
-  _syncFocusPaneOffsets();
   document.getElementById('discFocusPane').classList.add('open');
   document.body.style.overflow = 'hidden';
 
@@ -4650,22 +4585,12 @@ function emptyRow(cols, msg) {
 
 <script>
 /* ════════════ SIDEBAR COLLAPSE ════════════ */
-function _syncFocusPaneOffsets() {
-  var app = document.querySelector('.app');
-  var collapsed = !app || app.classList.contains('sidebar-collapsed');
-  var mobile = window.innerWidth <= 600;
-  var top  = mobile ? '0px' : '56px';
-  var left = mobile ? '0px' : (collapsed ? '64px' : '200px');
-  ['focusPane','discFocusPane','p6FocusPane'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) { el.style.top = top; el.style.left = left; }
-  });
-}
-window.addEventListener('resize', _syncFocusPaneOffsets);
 function toggleSidebar() {
   var app = document.querySelector('.app');
-  app.classList.toggle('sidebar-collapsed');
-  _syncFocusPaneOffsets();
+  var collapsed = app.classList.toggle('sidebar-collapsed');
+  // Keep focus pane aligned
+  var fp = document.getElementById('focusPane');
+  if (fp) fp.style.left = collapsed ? '64px' : '200px';
 }
 
 /* ════════════ MOBILE NAV ════════════ */
@@ -4727,15 +4652,27 @@ function renderP6Weekly() {
 
   var terms      = _data.terms || [];
   var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms[0] || {};
-  _p6.classId   = _data.p6ClassId   || '';
+  _p6.classId   = _data.p6ClassId  || '';
   _p6.subjectId = _data.p6SubjectId || '';
   _p6.termId    = String(activeTerm.term_id || '');
-  _p6.teacherId = _data.teacherId   || '';
+  _p6.teacherId = _data.teacherId  || '';
   _p6.dirty     = {};
+
+  // Term badge
+  var badge = document.getElementById('p6-term-badge');
+  if (badge) badge.textContent = activeTerm.name ? 'Term: ' + activeTerm.name : '';
+
+  // Subject badge
+  var subBadgeWrap = document.getElementById('p6-subject-badge-wrap');
+  if (subBadgeWrap) {
+    subBadgeWrap.innerHTML = _p6.subjectId
+      ? '<span style="display:inline-block;font-size:11px;font-weight:700;color:var(--purple,#7c3aed);background:#f5f3ff;padding:3px 10px;border-radius:99px;border:1px solid #ddd6fe">Your subject: ' + esc(_p6.subjectId) + '</span>'
+      : '<span style="display:inline-block;font-size:11px;font-weight:700;color:var(--amber);background:#fffbeb;padding:3px 10px;border-radius:99px;border:1px solid #fde68a">No subject assigned — contact admin</span>';
+  }
 
   // Update subtitle
   var sub = document.getElementById('p6-page-subtitle');
-  if (sub) sub.textContent = _p6.subjectId ? 'Your subject: ' + _p6.subjectId : 'Select a week to enter scores';
+  if (sub) sub.textContent = _p6.subjectId ? 'Your subject: ' + _p6.subjectId : 'P6 Weekly Marks';
 
   if (!_p6.classId || !_p6.termId) {
     var grid = document.getElementById('p6-week-grid');
@@ -4747,19 +4684,19 @@ function renderP6Weekly() {
   if (grid) grid.innerHTML = '<div class="empty-state" style="padding:40px 0"><div class="spinner" style="margin:0 auto"></div></div>';
 
   _gasGet('p6GetWeeklyDataForTeacher',{classId:_p6.classId,termId:_p6.termId,subjectId:_p6.subjectId}).then(function(res) {
-    if (!res || !res.ok) {
-      if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-text">' + esc((res && res.error) || 'Error loading data') + '</div></div>';
-      return;
-    }
-    _p6.students     = res.students     || [];
-    _p6.subjects     = res.subjects     || [];
-    _p6.subjectId    = res.subjectId    || _p6.subjectId;
-    _p6.maxScore     = res.maxScore     || 100;
-    _p6.existing     = res.existing     || [];
-    _p6.weeks        = res.weeks        || [];
-    _p6.weekProgress = res.weekProgress || {};
-    _p6RenderWeekPicker();
-  });
+      if (!res || !res.ok) {
+        if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-text">' + esc(res && res.error || 'Error') + '</div></div>';
+        return;
+      }
+      _p6.students     = res.students     || [];
+      _p6.subjects     = res.subjects     || [];   // only teacher's subject
+      _p6.subjectId    = res.subjectId    || _p6.subjectId;
+      _p6.maxScore     = res.maxScore     || 100;
+      _p6.existing     = res.existing     || [];
+      _p6.weeks        = res.weeks        || [];
+      _p6.weekProgress = res.weekProgress || {};
+      _p6RenderWeekPicker();
+    })
 }
 
 function _p6RenderWeekPicker() {
@@ -4799,32 +4736,15 @@ function p6OpenWeek(weekLabel) {
   _p6.weekLabel = weekLabel;
   _p6.dirty     = {};
 
-  // Hide week picker, open focus pane
   document.getElementById('p6-week-picker').style.display = 'none';
-  document.getElementById('p6FocusPane').classList.add('open');
-  document.body.style.overflow = 'hidden';
-
-  // Set focus bar title + meta
-  var titleEl = document.getElementById('p6FocusTitle');
-  if (titleEl) titleEl.textContent = '📅 ' + weekLabel;
+  document.getElementById('p6-week-entry-pane').classList.add('open');
+  document.getElementById('p6-entry-title').textContent = '📅 ' + weekLabel;
 
   var terms      = _data.terms || [];
   var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || {};
-  var className  = (_data.allClasses || _data.classes || [])
-    .filter(function(c){ return String(c.class_id) === _p6.classId; })
-    .map(function(c){ return c.Name || c.name || ''; })[0] || '';
-  var metaEl = document.getElementById('p6FocusMeta');
-  if (metaEl) metaEl.textContent = [className, activeTerm.name || '', _p6.subjectId ? 'Subject: ' + _p6.subjectId : ''].filter(Boolean).join('  ·  ');
-
-  // Reset save button + dirty badge
-  var btn = document.getElementById('p6-save-btn');
-  if (btn) { btn.disabled = true; }
-  var dc = document.getElementById('p6-dirty-count');
-  if (dc) dc.style.display = 'none';
-
-  // Reset search
-  var si = document.getElementById('p6SearchInput');
-  if (si) si.value = '';
+  var className  = (_data.allClasses || _data.classes || []).filter(function(c){ return String(c.class_id)===_p6.classId; }).map(function(c){ return c.Name||c.name||''; })[0] || '';
+  document.getElementById('p6-entry-meta').textContent =
+    [className, activeTerm.name ? activeTerm.name : '', _p6.subjectId ? 'Subject: ' + _p6.subjectId : ''].filter(Boolean).join('  ·  ');
 
   _p6RenderScoreTable();
   _p6UpdateChips();
@@ -4832,20 +4752,13 @@ function p6OpenWeek(weekLabel) {
 
 function p6BackToPicker() {
   if (Object.keys(_p6.dirty).length > 0) {
-    _discardTarget = _doP6Back;
-    document.getElementById('discardModal').classList.add('open');
-    return;
+    if (!window.confirm('You have unsaved changes. Discard and go back?')) return;
   }
-  _doP6Back();
-}
-
-function _doP6Back() {
   _p6.dirty = {};
-  document.getElementById('p6FocusPane').classList.remove('open');
-  document.body.style.overflow = '';
+  document.getElementById('p6-week-entry-pane').classList.remove('open');
   document.getElementById('p6-week-picker').style.display = '';
   var btn = document.getElementById('p6-save-btn');
-  if (btn) { btn.disabled = true; }
+  if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
   var dc = document.getElementById('p6-dirty-count');
   if (dc) dc.style.display = 'none';
   var si = document.getElementById('p6SearchInput');
@@ -4997,7 +4910,7 @@ function p6OnInput(input) {
   var cnt = Object.keys(_p6.dirty).length;
   var btn = document.getElementById('p6-save-btn');
   var dc  = document.getElementById('p6-dirty-count');
-  if (btn) { btn.disabled = cnt === 0; }
+  if (btn) { btn.disabled = cnt === 0; btn.style.opacity = cnt > 0 ? '1' : '.5'; }
   if (dc)  { dc.style.display = cnt > 0 ? '' : 'none'; dc.textContent = '● ' + cnt + ' unsaved'; }
   _p6UpdateChips();
 }
@@ -5051,7 +4964,7 @@ function p6SaveScores() {
       }
       showToast('✓ Saved — ' + (res.inserted||0) + ' new, ' + (res.updated||0) + ' updated', 'ok');
       _p6.dirty = {};
-      if (btn) btn.disabled = true;
+      if (btn) btn.style.opacity = '.5';
       var dc = document.getElementById('p6-dirty-count');
       if (dc) dc.style.display = 'none';
 
