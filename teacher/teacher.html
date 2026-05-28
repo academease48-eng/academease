@@ -2241,9 +2241,15 @@ function renderStats() {
 }
 
 function renderSection(name, opts) {
-  // Deliberation is never cached — it re-renders cards each time (fast, client-side)
-  // Marks also re-renders when called with backgroundRefresh to update cards after save
-  if (name !== 'deliberation' && name !== 'marks' && _rendered[name] && _data) return;
+  // These sections always re-render on navigation (never cached):
+  // - deliberation: re-renders cards each time (fast, client-side)
+  // - marks: re-renders unless it's a background refresh that was already rendered
+  // - discipline: re-renders to refresh progress bar
+  // - p6weekly: re-renders to refresh week progress
+  var alwaysRender = ['deliberation', 'marks', 'discipline', 'p6weekly'];
+  var isAlways = alwaysRender.indexOf(name) !== -1;
+
+  if (!isAlways && _rendered[name] && _data) return;
   if (name === 'marks' && _rendered[name] && _data && !(opts && opts.backgroundRefresh)) return;
   if (_data) _rendered[name] = true;
   switch(name) {
@@ -2340,8 +2346,11 @@ function renderMarksEntry(opts) {
 
   // Only close focus pane when navigating TO marks (not when called as background refresh)
   if (!opts.backgroundRefresh) {
-    document.getElementById('focusPane').classList.remove('open');
-    document.getElementById('coursePickerContainer').style.display = '';
+    var _fp = document.getElementById('focusPane');
+    if (_fp) _fp.classList.remove('open');
+    document.body.style.overflow = '';
+    var _cpc = document.getElementById('coursePickerContainer');
+    if (_cpc) _cpc.style.display = '';
   }
 
   var assignments = _data.assignments || [];
@@ -2611,6 +2620,7 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'Escape') {
     if (document.getElementById('discardModal').classList.contains('open')) { closeDiscardModal(); return; }
     if (document.getElementById('focusPane').classList.contains('open')) { closeFocus(); return; }
+    if (document.getElementById('discFocusPane') && document.getElementById('discFocusPane').classList.contains('open')) { closeDiscFocus(); return; }
     if (document.getElementById('p6FocusPane') && document.getElementById('p6FocusPane').classList.contains('open')) { p6BackToPicker(); return; }
   }
 });
@@ -3610,7 +3620,47 @@ function _profileErr(msg) {
 /* ════════════════════════════
    NAVIGATION
 ════════════════════════════ */
+function _closeAllFocusPanes() {
+  // Close marks focus pane (without dirty-check since we're navigating away)
+  var fp = document.getElementById('focusPane');
+  if (fp && fp.classList.contains('open')) {
+    fp.classList.remove('open');
+    document.body.style.overflow = '';
+    _focus.dirty = {};
+    document.querySelectorAll('.mark-err-tip').forEach(function(t){ t.remove(); });
+    _errTips = {};
+  }
+  // Always restore course picker visibility when leaving marks
+  var cpc = document.getElementById('coursePickerContainer');
+  if (cpc) cpc.style.display = '';
+
+  // Close discipline focus pane
+  var dfp = document.getElementById('discFocusPane');
+  if (dfp && dfp.classList.contains('open')) {
+    dfp.classList.remove('open');
+    document.body.style.overflow = '';
+    _disc.dirty = {};
+  }
+  // Always restore disc picker visibility when leaving discipline
+  var dpc = document.getElementById('discPickerContainer');
+  if (dpc) dpc.style.display = '';
+
+  // Close P6 weekly focus pane
+  var p6fp = document.getElementById('p6FocusPane');
+  if (p6fp && p6fp.classList.contains('open')) {
+    p6fp.classList.remove('open');
+    document.body.style.overflow = '';
+    _p6.dirty = {};
+  }
+  // Always restore P6 week picker visibility when leaving p6weekly
+  var p6wp = document.getElementById('p6-week-picker');
+  if (p6wp) p6wp.style.display = '';
+}
+
 function showSection(name, _el) {
+  // Close any open focus panes before switching sections
+  _closeAllFocusPanes();
+
   // Deactivate all
   document.querySelectorAll('.section').forEach(function(el){ el.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(el){ el.classList.remove('active'); });
@@ -3672,6 +3722,14 @@ var _disc = {
 /* ── Build the class picker card (one card per homeroom class) ── */
 function renderDiscipline() {
   if (!_data) return;
+
+  // Always ensure focus pane is hidden and picker is shown when rendering discipline section
+  var dfp = document.getElementById('discFocusPane');
+  if (dfp && !dfp.classList.contains('open')) {
+    // pane already closed — ensure picker is visible
+    var dpc = document.getElementById('discPickerContainer');
+    if (dpc) dpc.style.display = '';
+  }
 
   var teacherId      = _data.teacherId      || '';
   var teacherClassId = _data.teacherClassId || '';
@@ -3785,14 +3843,11 @@ function openDiscFocus() {
 function closeDiscFocus() {
   document.getElementById('discFocusPane').classList.remove('open');
   document.body.style.overflow = '';
-  document.getElementById('discPickerContainer').style.display = '';
+  var dpc = document.getElementById('discPickerContainer');
+  if (dpc) dpc.style.display = '';
   _disc.dirty = {};
   renderDiscipline(); // refresh card progress bar
 }
-
-document.addEventListener('keydown', function(e){
-  if (e.key === 'Escape' && document.getElementById('discFocusPane').classList.contains('open')) closeDiscFocus();
-});
 
 function discSearchFilter(val) {
   _disc.searchVal = (val || '').toLowerCase();
@@ -4725,13 +4780,19 @@ var _p6 = {
 function renderP6Weekly() {
   if (!_data || !_data.isP6Teacher) return;
 
+  // Always make sure focus pane is hidden and week picker is visible when entering this section
+  var p6fp = document.getElementById('p6FocusPane');
+  if (p6fp) p6fp.classList.remove('open');
+  var p6wp = document.getElementById('p6-week-picker');
+  if (p6wp) p6wp.style.display = '';
+  document.body.style.overflow = '';
+
   var terms      = _data.terms || [];
   var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms[0] || {};
   _p6.classId   = _data.p6ClassId   || '';
   _p6.subjectId = _data.p6SubjectId || '';
   _p6.termId    = String(activeTerm.term_id || '');
   _p6.teacherId = _data.teacherId   || '';
-  _p6.dirty     = {};
 
   // Update subtitle
   var sub = document.getElementById('p6-page-subtitle');
@@ -4740,6 +4801,12 @@ function renderP6Weekly() {
   if (!_p6.classId || !_p6.termId) {
     var grid = document.getElementById('p6-week-grid');
     if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">No active term or P6 class found.</div></div>';
+    return;
+  }
+
+  // If we already fetched data, just re-render the picker (no network call needed)
+  if (_p6.weeks && _p6.weeks.length > 0) {
+    _p6RenderWeekPicker();
     return;
   }
 
