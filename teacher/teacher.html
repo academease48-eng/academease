@@ -2242,16 +2242,11 @@ function renderStats() {
 }
 
 function renderSection(name, opts) {
-  // These sections always re-render on navigation (never cached):
-  // - deliberation: re-renders cards each time (fast, client-side)
-  // - marks: re-renders unless it's a background refresh that was already rendered
-  // - discipline: re-renders to refresh progress bar
-  // - p6weekly: re-renders to refresh week progress
-  var alwaysRender = ['deliberation', 'marks', 'discipline', 'p6weekly'];
-  var isAlways = alwaysRender.indexOf(name) !== -1;
+  // overview, courses, profile: render once and cache
+  // marks, discipline, deliberation, p6weekly: always re-render (reflect latest data)
+  var cacheOnce = ['overview', 'courses', 'profile'];
+  if (cacheOnce.indexOf(name) !== -1 && _rendered[name] && _data) return;
 
-  if (!isAlways && _rendered[name] && _data) return;
-  if (name === 'marks' && _rendered[name] && _data && !(opts && opts.backgroundRefresh)) return;
   if (_data) _rendered[name] = true;
   switch(name) {
     case 'overview':     renderOverview(); break;
