@@ -2242,11 +2242,10 @@ function renderStats() {
 }
 
 function renderSection(name, opts) {
-  // overview, courses, profile: render once and cache
-  // marks, discipline, deliberation, p6weekly: always re-render (reflect latest data)
-  var cacheOnce = ['overview', 'courses', 'profile'];
-  if (cacheOnce.indexOf(name) !== -1 && _rendered[name] && _data) return;
-
+  // Deliberation is never cached — it re-renders cards each time (fast, client-side)
+  // Marks also re-renders when called with backgroundRefresh to update cards after save
+  if (name !== 'deliberation' && name !== 'marks' && _rendered[name] && _data) return;
+  if (name === 'marks' && _rendered[name] && _data && !(opts && opts.backgroundRefresh)) return;
   if (_data) _rendered[name] = true;
   switch(name) {
     case 'overview':     renderOverview(); break;
@@ -2342,11 +2341,8 @@ function renderMarksEntry(opts) {
 
   // Only close focus pane when navigating TO marks (not when called as background refresh)
   if (!opts.backgroundRefresh) {
-    var _fp = document.getElementById('focusPane');
-    if (_fp) _fp.classList.remove('open');
-    var _cpc = document.getElementById('coursePickerContainer');
-    if (_cpc) _cpc.style.display = '';
-    document.body.style.overflow = '';
+    document.getElementById('focusPane').classList.remove('open');
+    document.getElementById('coursePickerContainer').style.display = '';
   }
 
   var assignments = _data.assignments || [];
@@ -2616,7 +2612,6 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'Escape') {
     if (document.getElementById('discardModal').classList.contains('open')) { closeDiscardModal(); return; }
     if (document.getElementById('focusPane').classList.contains('open')) { closeFocus(); return; }
-    if (document.getElementById('discFocusPane') && document.getElementById('discFocusPane').classList.contains('open')) { closeDiscFocus(); return; }
     if (document.getElementById('p6FocusPane') && document.getElementById('p6FocusPane').classList.contains('open')) { p6BackToPicker(); return; }
   }
 });
@@ -3616,43 +3611,7 @@ function _profileErr(msg) {
 /* ════════════════════════════
    NAVIGATION
 ════════════════════════════ */
-function _closeAllFocusPanes() {
-  // Close marks focus pane — restore picker so section is usable on return
-  var fp = document.getElementById('focusPane');
-  if (fp && fp.classList.contains('open')) {
-    fp.classList.remove('open');
-    _focus.dirty = {};
-    document.querySelectorAll('.mark-err-tip').forEach(function(t){ t.remove(); });
-    _errTips = {};
-    var cpc = document.getElementById('coursePickerContainer');
-    if (cpc) cpc.style.display = '';
-  }
-
-  // Close discipline focus pane — restore picker
-  var dfp = document.getElementById('discFocusPane');
-  if (dfp && dfp.classList.contains('open')) {
-    dfp.classList.remove('open');
-    _disc.dirty = {};
-    var dpc = document.getElementById('discPickerContainer');
-    if (dpc) dpc.style.display = '';
-  }
-
-  // Close P6 weekly focus pane — restore week picker
-  var p6fp = document.getElementById('p6FocusPane');
-  if (p6fp && p6fp.classList.contains('open')) {
-    p6fp.classList.remove('open');
-    _p6.dirty = {};
-    var p6wp = document.getElementById('p6-week-picker');
-    if (p6wp) p6wp.style.display = '';
-  }
-
-  document.body.style.overflow = '';
-}
-
 function showSection(name, _el) {
-  // Close any open focus panes before switching sections
-  _closeAllFocusPanes();
-
   // Deactivate all
   document.querySelectorAll('.section').forEach(function(el){ el.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(el){ el.classList.remove('active'); });
@@ -3827,11 +3786,14 @@ function openDiscFocus() {
 function closeDiscFocus() {
   document.getElementById('discFocusPane').classList.remove('open');
   document.body.style.overflow = '';
-  var dpc = document.getElementById('discPickerContainer');
-  if (dpc) dpc.style.display = '';
+  document.getElementById('discPickerContainer').style.display = '';
   _disc.dirty = {};
   renderDiscipline(); // refresh card progress bar
 }
+
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && document.getElementById('discFocusPane').classList.contains('open')) closeDiscFocus();
+});
 
 function discSearchFilter(val) {
   _disc.searchVal = (val || '').toLowerCase();
@@ -4070,11 +4032,7 @@ function saveDiscMarks() {
         showToast('Save failed: ' + (res && res.error ? res.error.substring(0,140) : 'Unknown error'), 'err');
         document.getElementById('btnSaveDisc').disabled = false;
       }
-    }).catch(function(err) {
-      hideSaveBar(false);
-      showToast('Network error: ' + (err && err.message ? err.message.substring(0,120) : 'Please retry'), 'err');
-      document.getElementById('btnSaveDisc').disabled = false;
-    });
+    })
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -4590,12 +4548,7 @@ function saveDeliberation() {
         document.getElementById('btn-save-delib').disabled = false;
         document.getElementById('btn-save-delib').style.opacity = '1';
       }
-    }).catch(function(err) {
-      hideSaveBar(false);
-      showToast('Network error: ' + (err && err.message ? err.message.substring(0,120) : 'Please retry'), 'err');
-      document.getElementById('btn-save-delib').disabled = false;
-      document.getElementById('btn-save-delib').style.opacity = '1';
-    });
+    })
 }
 
 function doLogout() {
@@ -4779,6 +4732,7 @@ function renderP6Weekly() {
   _p6.subjectId = _data.p6SubjectId || '';
   _p6.termId    = String(activeTerm.term_id || '');
   _p6.teacherId = _data.teacherId   || '';
+  _p6.dirty     = {};
 
   // Update subtitle
   var sub = document.getElementById('p6-page-subtitle');
@@ -4787,12 +4741,6 @@ function renderP6Weekly() {
   if (!_p6.classId || !_p6.termId) {
     var grid = document.getElementById('p6-week-grid');
     if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">No active term or P6 class found.</div></div>';
-    return;
-  }
-
-  // If we already fetched data, just re-render the picker (no network call needed)
-  if (_p6.weeks && _p6.weeks.length > 0) {
-    _p6RenderWeekPicker();
     return;
   }
 
