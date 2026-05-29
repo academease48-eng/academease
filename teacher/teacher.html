@@ -3992,7 +3992,7 @@ function saveDiscMarks() {
     var marksVal = (dirty.marks !== undefined && dirty.marks !== null)
                     ? String(dirty.marks).trim()
                     : (rec.Marks !== undefined && rec.Marks !== '' ? String(rec.Marks).trim() : '');
-    if (marksVal === '') return; // skip blank rows
+    if (marksVal === '') return;
     updates.push({
       discipline_id:    String(rec.discipline_id || ''),
       student_id:       String(sid),
@@ -4012,23 +4012,40 @@ function saveDiscMarks() {
   document.getElementById('btnSaveDisc').disabled = true;
   showSaveBar(updates.length, 'Saving');
 
-  _gasPost('teacherSaveDiscipline',updates).then(function(res){
-      hideSaveBar(res && res.ok);
-      if (res && res.ok) {
-        _disc.dirty = {};
-        if (res.discipline) _data.discipline = res.discipline;
-        var terms2     = _data.terms || [];
-        var at2        = terms2.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms2[0] || {};
-        var termId2    = String(at2.term_id || '');
-        _disc.records  = {};
-        res.discipline.forEach(function(d){
-          if (String(d.term_id) === termId2 && String(d.class_id) === String(_disc.classId)) {
+  // Chunk to avoid GAS URL length limit (400 Bad Request)
+  var CHUNK = 10;
+  var chunks = [];
+  for (var ci = 0; ci < updates.length; ci += CHUNK) chunks.push(updates.slice(ci, ci + CHUNK));
+  var totalInserted = 0, totalUpdated = 0, lastDiscipline = null;
+
+  function _nextChunk(idx) {
+    if (idx >= chunks.length) {
+      hideSaveBar(true);
+      _disc.dirty = {};
+      if (lastDiscipline) {
+        _data.discipline = lastDiscipline;
+        var terms2 = _data.terms || [];
+        var at2    = terms2.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms2[0] || {};
+        var termId2 = String(at2.term_id || '');
+        _disc.records = {};
+        lastDiscipline.forEach(function(d){
+          if (String(d.term_id) === termId2 && String(d.class_id) === String(_disc.classId))
             _disc.records[String(d.student_id)] = d;
-          }
         });
         _renderDiscTable();
-        showToast('Saved! ' + (res.inserted||0) + ' new, ' + (res.updated||0) + ' updated.', 'ok');
+      }
+      showToast('Saved! ' + totalInserted + ' new, ' + totalUpdated + ' updated.', 'ok');
+      return;
+    }
+    updateSaveBar(Math.round((idx / chunks.length) * 88), 'Saving ' + (idx+1) + ' of ' + chunks.length + '…');
+    _gasPost('teacherSaveDiscipline', chunks[idx]).then(function(res) {
+      if (res && res.ok) {
+        totalInserted += (res.inserted || 0);
+        totalUpdated  += (res.updated  || 0);
+        if (res.discipline) lastDiscipline = res.discipline;
+        _nextChunk(idx + 1);
       } else {
+        hideSaveBar(false);
         showToast('Save failed: ' + (res && res.error ? res.error.substring(0,140) : 'Unknown error'), 'err');
         document.getElementById('btnSaveDisc').disabled = false;
       }
@@ -4037,6 +4054,8 @@ function saveDiscMarks() {
       showToast('Error: ' + (err && err.message ? err.message.substring(0,120) : 'Network error — please retry'), 'err');
       document.getElementById('btnSaveDisc').disabled = false;
     });
+  }
+  _nextChunk(0);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -4526,28 +4545,44 @@ function saveDeliberation() {
   document.getElementById('btn-save-delib').style.opacity = '.5';
   showSaveBar(updates.length, 'Saving');
 
-  _gasPost('teacherSaveDeliberation',updates).then(function(res){
-      hideSaveBar(res && res.ok);
+  // Chunk to avoid GAS URL length limit (400 Bad Request)
+  var CHUNK = 10;
+  var chunks = [];
+  for (var ci = 0; ci < updates.length; ci += CHUNK) chunks.push(updates.slice(ci, ci + CHUNK));
+  var totalInserted = 0, totalUpdated = 0, lastDelib = null;
+
+  function _nextChunk(idx) {
+    if (idx >= chunks.length) {
+      hideSaveBar(true);
+      if (lastDelib) {
+        _data.deliberation = lastDelib;
+        _delib.saved = {};
+        lastDelib.forEach(function(d){
+          if (String(d.term_id) === _delib.termId) {
+            _delib.saved[String(d.student_id)] = {
+              status:        d.deliberation_status || 'Pending',
+              next_class_id: d.next_class_id       || '',
+              comment:       d.comment             || ''
+            };
+          }
+        });
+      }
+      _delib.dirty = {};
+      _updateSaveBtn();
+      _renderDelibTable();
+      renderDeliberation();
+      showToast('Saved! ' + totalInserted + ' new, ' + totalUpdated + ' updated.', 'ok');
+      return;
+    }
+    updateSaveBar(Math.round((idx / chunks.length) * 88), 'Saving ' + (idx+1) + ' of ' + chunks.length + '…');
+    _gasPost('teacherSaveDeliberation', chunks[idx]).then(function(res) {
       if (res && res.ok) {
-        if (res.deliberation) {
-          _data.deliberation = res.deliberation;
-          _delib.saved = {};
-          res.deliberation.forEach(function(d){
-            if (String(d.term_id) === _delib.termId) {
-              _delib.saved[String(d.student_id)] = {
-                status:        d.deliberation_status || 'Pending',
-                next_class_id: d.next_class_id       || '',
-                comment:       d.comment             || ''
-              };
-            }
-          });
-        }
-        _delib.dirty = {};
-        _updateSaveBtn();
-        _renderDelibTable();
-        renderDeliberation();
-        showToast('Saved! ' + (res.inserted||0) + ' new, ' + (res.updated||0) + ' updated.', 'ok');
+        totalInserted += (res.inserted || 0);
+        totalUpdated  += (res.updated  || 0);
+        if (res.deliberation) lastDelib = res.deliberation;
+        _nextChunk(idx + 1);
       } else {
+        hideSaveBar(false);
         showToast('Save failed: ' + (res && res.error ? res.error.substring(0,140) : 'Unknown'), 'err');
         document.getElementById('btn-save-delib').disabled = false;
         document.getElementById('btn-save-delib').style.opacity = '1';
@@ -4558,6 +4593,8 @@ function saveDeliberation() {
       document.getElementById('btn-save-delib').disabled = false;
       document.getElementById('btn-save-delib').style.opacity = '1';
     });
+  }
+  _nextChunk(0);
 }
 
 function doLogout() {
