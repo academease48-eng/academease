@@ -3715,12 +3715,6 @@ var _disc = {
 function renderDiscipline() {
   if (!_data) return;
 
-  // Always ensure the focus pane is closed and picker is visible when rendering
-  var dfp = document.getElementById('discFocusPane');
-  if (dfp) dfp.classList.remove('open');
-  var dpc = document.getElementById('discPickerContainer');
-  if (dpc) dpc.style.display = '';
-
   var teacherId      = _data.teacherId      || '';
   var teacherClassId = _data.teacherClassId || '';
   var allClasses     = _data.classes        || [];
@@ -4778,11 +4772,6 @@ var _p6 = {
 
 function renderP6Weekly() {
   if (!_data || !_data.isP6Teacher) return;
-
-  // Ensure week picker is visible (focus pane already closed by _closeAllFocusPanes)
-  var p6wp = document.getElementById('p6-week-picker');
-  if (p6wp) p6wp.style.display = '';
-  document.body.style.overflow = '';
 
   var terms      = _data.terms || [];
   var activeTerm = terms.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms[0] || {};
