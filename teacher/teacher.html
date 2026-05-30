@@ -750,12 +750,13 @@
 
     /* Closed lock indicator — compact, no /max */
     .mark-locked{
-      display:flex;align-items:center;justify-content:center;gap:4px;
+      display:flex;align-items:center;justify-content:center;gap:5px;
       width:100%;height:36px;
+      background:rgba(220,38,38,.06);
     }
-    .mark-locked-val{font-size:13px;font-weight:700;color:#334155}
+    .mark-locked-val{font-size:13px;font-weight:700;color:#475569}
     .mark-locked-slash{display:none}   /* /max hidden in cells */
-    .mark-locked-icon{font-size:10px;color:#c4cfe0}
+    .mark-locked-icon{font-size:11px;opacity:.75;flex-shrink:0}
 
     /* Total cell — clean inline display, no badge box */
     .total-cell{display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;height:36px}
@@ -2979,7 +2980,7 @@ function _renderFocusPage() {
           } else {
             return td+'<div class="mark-locked">'
               +'<span class="mark-locked-val">'+(val!==''?val:'—')+'</span>'
-              +(val!==''?'<span class="mark-check show" style="color:'+sm.color+'">✓</span>':'<span class="mark-locked-icon">🔒</span>')
+              +'<span class="mark-locked-icon">🔒</span>'
               +'</div></td>';
           }
         }
