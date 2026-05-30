@@ -3992,7 +3992,7 @@ function saveDiscMarks() {
     var marksVal = (dirty.marks !== undefined && dirty.marks !== null)
                     ? String(dirty.marks).trim()
                     : (rec.Marks !== undefined && rec.Marks !== '' ? String(rec.Marks).trim() : '');
-    if (marksVal === '') return;
+    if (marksVal === '') return; // skip blank rows
     updates.push({
       discipline_id:    String(rec.discipline_id || ''),
       student_id:       String(sid),
@@ -4012,50 +4012,27 @@ function saveDiscMarks() {
   document.getElementById('btnSaveDisc').disabled = true;
   showSaveBar(updates.length, 'Saving');
 
-  // Chunk to avoid GAS URL length limit (400 Bad Request)
-  var CHUNK = 10;
-  var chunks = [];
-  for (var ci = 0; ci < updates.length; ci += CHUNK) chunks.push(updates.slice(ci, ci + CHUNK));
-  var totalInserted = 0, totalUpdated = 0, lastDiscipline = null;
-
-  function _nextChunk(idx) {
-    if (idx >= chunks.length) {
-      hideSaveBar(true);
-      _disc.dirty = {};
-      if (lastDiscipline) {
-        _data.discipline = lastDiscipline;
-        var terms2 = _data.terms || [];
-        var at2    = terms2.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms2[0] || {};
-        var termId2 = String(at2.term_id || '');
-        _disc.records = {};
-        lastDiscipline.forEach(function(d){
-          if (String(d.term_id) === termId2 && String(d.class_id) === String(_disc.classId))
+  _gasPost('teacherSaveDiscipline',updates).then(function(res){
+      hideSaveBar(res && res.ok);
+      if (res && res.ok) {
+        _disc.dirty = {};
+        if (res.discipline) _data.discipline = res.discipline;
+        var terms2     = _data.terms || [];
+        var at2        = terms2.find(function(t){ return String(t.is_active).toLowerCase()==='true'; }) || terms2[0] || {};
+        var termId2    = String(at2.term_id || '');
+        _disc.records  = {};
+        res.discipline.forEach(function(d){
+          if (String(d.term_id) === termId2 && String(d.class_id) === String(_disc.classId)) {
             _disc.records[String(d.student_id)] = d;
+          }
         });
         _renderDiscTable();
-      }
-      showToast('Saved! ' + totalInserted + ' new, ' + totalUpdated + ' updated.', 'ok');
-      return;
-    }
-    updateSaveBar(Math.round((idx / chunks.length) * 88), 'Saving ' + (idx+1) + ' of ' + chunks.length + '…');
-    _gasPost('teacherSaveDiscipline', chunks[idx]).then(function(res) {
-      if (res && res.ok) {
-        totalInserted += (res.inserted || 0);
-        totalUpdated  += (res.updated  || 0);
-        if (res.discipline) lastDiscipline = res.discipline;
-        _nextChunk(idx + 1);
+        showToast('Saved! ' + (res.inserted||0) + ' new, ' + (res.updated||0) + ' updated.', 'ok');
       } else {
-        hideSaveBar(false);
         showToast('Save failed: ' + (res && res.error ? res.error.substring(0,140) : 'Unknown error'), 'err');
         document.getElementById('btnSaveDisc').disabled = false;
       }
-    }).catch(function(err) {
-      hideSaveBar(false);
-      showToast('Error: ' + (err && err.message ? err.message.substring(0,120) : 'Network error — please retry'), 'err');
-      document.getElementById('btnSaveDisc').disabled = false;
-    });
-  }
-  _nextChunk(0);
+    })
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -4545,56 +4522,33 @@ function saveDeliberation() {
   document.getElementById('btn-save-delib').style.opacity = '.5';
   showSaveBar(updates.length, 'Saving');
 
-  // Chunk to avoid GAS URL length limit (400 Bad Request)
-  var CHUNK = 10;
-  var chunks = [];
-  for (var ci = 0; ci < updates.length; ci += CHUNK) chunks.push(updates.slice(ci, ci + CHUNK));
-  var totalInserted = 0, totalUpdated = 0, lastDelib = null;
-
-  function _nextChunk(idx) {
-    if (idx >= chunks.length) {
-      hideSaveBar(true);
-      if (lastDelib) {
-        _data.deliberation = lastDelib;
-        _delib.saved = {};
-        lastDelib.forEach(function(d){
-          if (String(d.term_id) === _delib.termId) {
-            _delib.saved[String(d.student_id)] = {
-              status:        d.deliberation_status || 'Pending',
-              next_class_id: d.next_class_id       || '',
-              comment:       d.comment             || ''
-            };
-          }
-        });
-      }
-      _delib.dirty = {};
-      _updateSaveBtn();
-      _renderDelibTable();
-      renderDeliberation();
-      showToast('Saved! ' + totalInserted + ' new, ' + totalUpdated + ' updated.', 'ok');
-      return;
-    }
-    updateSaveBar(Math.round((idx / chunks.length) * 88), 'Saving ' + (idx+1) + ' of ' + chunks.length + '…');
-    _gasPost('teacherSaveDeliberation', chunks[idx]).then(function(res) {
+  _gasPost('teacherSaveDeliberation',updates).then(function(res){
+      hideSaveBar(res && res.ok);
       if (res && res.ok) {
-        totalInserted += (res.inserted || 0);
-        totalUpdated  += (res.updated  || 0);
-        if (res.deliberation) lastDelib = res.deliberation;
-        _nextChunk(idx + 1);
+        if (res.deliberation) {
+          _data.deliberation = res.deliberation;
+          _delib.saved = {};
+          res.deliberation.forEach(function(d){
+            if (String(d.term_id) === _delib.termId) {
+              _delib.saved[String(d.student_id)] = {
+                status:        d.deliberation_status || 'Pending',
+                next_class_id: d.next_class_id       || '',
+                comment:       d.comment             || ''
+              };
+            }
+          });
+        }
+        _delib.dirty = {};
+        _updateSaveBtn();
+        _renderDelibTable();
+        renderDeliberation();
+        showToast('Saved! ' + (res.inserted||0) + ' new, ' + (res.updated||0) + ' updated.', 'ok');
       } else {
-        hideSaveBar(false);
         showToast('Save failed: ' + (res && res.error ? res.error.substring(0,140) : 'Unknown'), 'err');
         document.getElementById('btn-save-delib').disabled = false;
         document.getElementById('btn-save-delib').style.opacity = '1';
       }
-    }).catch(function(err) {
-      hideSaveBar(false);
-      showToast('Error: ' + (err && err.message ? err.message.substring(0,120) : 'Network error — please retry'), 'err');
-      document.getElementById('btn-save-delib').disabled = false;
-      document.getElementById('btn-save-delib').style.opacity = '1';
-    });
-  }
-  _nextChunk(0);
+    })
 }
 
 function doLogout() {
@@ -4873,8 +4827,7 @@ function p6OpenWeek(weekLabel) {
   var si = document.getElementById('p6SearchInput');
   if (si) si.value = '';
 
-  _p6RenderScoreTable();
-  _p6UpdateChips();
+  _p6RenderTable();
 }
 
 function p6BackToPicker() {
@@ -4899,7 +4852,7 @@ function _doP6Back() {
   if (si) si.value = '';
 }
 
-function _p6RenderScoreTable() {
+function _p6RenderTable() {
   var subjs    = _p6.subjects;   // e.g. ['Mathematics']
   var students = _p6.students;
   var existing = _p6.existing;
@@ -4974,48 +4927,60 @@ function _p6RenderScoreTable() {
 function p6KeyNav(e, inp) {
   if (e.key === 'Enter' || e.key === 'ArrowDown') {
     e.preventDefault();
-    var inputs = Array.from(document.querySelectorAll('#p6-marks-table .p6-score-input:not([style*="display:none"])'));
-    var idx2 = inputs.indexOf(inp);
-    if (idx2 < inputs.length - 1) inputs[idx2 + 1].focus();
+    var inputs = Array.from(document.querySelectorAll('#p6-score-tbody .p6-score-input')).filter(function(el){ return el.closest('tr').style.display !== 'none'; });
+    var i = inputs.indexOf(inp);
+    if (i < inputs.length - 1) inputs[i + 1].focus();
   } else if (e.key === 'ArrowUp') {
     e.preventDefault();
-    var inputs2 = Array.from(document.querySelectorAll('#p6-marks-table .p6-score-input:not([style*="display:none"])'));
-    var idx3 = inputs2.indexOf(inp);
-    if (idx3 > 0) inputs2[idx3 - 1].focus();
+    var inputs2 = Array.from(document.querySelectorAll('#p6-score-tbody .p6-score-input')).filter(function(el){ return el.closest('tr').style.display !== 'none'; });
+    var j = inputs2.indexOf(inp);
+    if (j > 0) inputs2[j - 1].focus();
   }
 }
 
 function p6FilterStudents(q) {
   q = (q || '').toLowerCase().trim();
+  var si = document.getElementById('p6SearchInput');
+  if (si && si.value.toLowerCase().trim() !== q) si.value = q;
   var rows = document.querySelectorAll('#p6-score-tbody tr[data-name]');
-  rows.forEach(function(row) {
-    var name = row.getAttribute('data-name') || '';
-    row.style.display = (!q || name.includes(q)) ? '' : 'none';
+  var shown = 0;
+  rows.forEach(function(r) {
+    var vis = !q || (r.getAttribute('data-name') || '').includes(q);
+    r.style.display = vis ? '' : 'none';
+    if (vis) shown++;
   });
-  var vis = document.getElementById('p6Stats');
-  if (vis) {
-    var shown = Array.from(rows).filter(function(r){ return r.style.display !== 'none'; }).length;
-    vis.textContent = q ? shown + ' / ' + rows.length + ' students' : rows.length + ' students';
-  }
+  var st = document.getElementById('p6Stats');
+  if (st) st.textContent = q ? shown + ' / ' + rows.length + ' students' : rows.length + ' students';
 }
 
 function _p6UpdateChips() {
   var rows = document.querySelectorAll('#p6-score-tbody tr[data-name]');
-  var pending = 0, saved = 0;
+  var filledCnt = 0, savedCnt = 0;
   rows.forEach(function(row) {
-    if (row.classList.contains('row-dirty'))      pending++;
-    else if (row.classList.contains('row-saved')) saved++;
-    else                                          pending++;
+    if (row.classList.contains('row-saved')) savedCnt++;
   });
-  // "Pending" = no data yet, "Saved" = has data
-  var savedRows = Array.from(rows).filter(function(r){ return r.classList.contains('row-saved'); });
-  var pendRows  = rows.length - savedRows.length;
-  var cp = document.getElementById('p6ChipPending');
-  var cs = document.getElementById('p6ChipSaved');
-  if (cp) cp.textContent = pendRows;
-  if (cs) cs.textContent = savedRows.length;
-  var vis = document.getElementById('p6Stats');
-  if (vis) vis.textContent = rows.length + ' students';
+  var students = _p6.students || [];
+  rows.forEach(function(row) {
+    var sid = row.getAttribute('data-sid') || '';
+    var hasAny = false;
+    (_p6.subjects || []).forEach(function(subj) {
+      var dk1 = sid + '|' + subj + '|test1';
+      var dk2 = sid + '|' + subj + '|test2';
+      var entry = (_p6.existing || []).find(function(r){
+        return String(r.week_label).trim() === _p6.weekLabel && String(r.student_id).trim() === sid && String(r.subject_id).trim() === subj;
+      }) || {};
+      var t1 = _p6.dirty.hasOwnProperty(dk1) ? String(_p6.dirty[dk1]) : (entry.test1 !== undefined && entry.test1 !== null && entry.test1 !== '' ? String(entry.test1) : '');
+      var t2 = _p6.dirty.hasOwnProperty(dk2) ? String(_p6.dirty[dk2]) : (entry.test2 !== undefined && entry.test2 !== null && entry.test2 !== '' ? String(entry.test2) : '');
+      if (t1 !== '' || t2 !== '') hasAny = true;
+    });
+    if (hasAny) filledCnt++;
+  });
+  var pendingCnt = students.length - filledCnt;
+  var cp = document.getElementById('p6ChipPending'); if (cp) cp.textContent = Math.max(0, pendingCnt);
+  var cs = document.getElementById('p6ChipSaved');   if (cs) cs.textContent = savedCnt;
+  var st = document.getElementById('p6Stats');       if (st) st.textContent = 'Showing ' + students.length;
+  var avgEl = document.getElementById('p6Avg');
+  if (avgEl) { avgEl.style.display = filledCnt > 0 ? '' : 'none'; avgEl.textContent = 'Filled: ' + filledCnt + '/' + students.length; }
 }
 
 function p6OnInput(input) {
@@ -5028,58 +4993,70 @@ function p6OnInput(input) {
   input.classList.add('dirty');
 
   if (val !== '') {
-    var n = parseFloat(val);
-    if (!isNaN(n)) {
-      n = Math.min(_p6.maxScore, Math.max(0, n));
-      _p6.dirty[key] = n;
-      if (String(n) !== input.value) input.value = n;
-    }
+    var n = Math.min(_p6.maxScore, Math.max(0, parseFloat(val) || 0));
+    _p6.dirty[key] = n;
+    if (String(n) !== input.value) input.value = n;
   } else {
     _p6.dirty[key] = '';
   }
 
+  // Update checkmark
+  var wrap = input.parentElement;
+  if (wrap) { var ck = wrap.querySelector('.mark-check'); if (ck) ck.classList.toggle('show', val !== ''); }
+
+  // Update row class
   var tr = input.closest('tr');
   if (tr) { tr.classList.remove('row-saved'); tr.classList.add('row-dirty'); }
+
+  // Update status icon in name cell
+  if (tr) {
+    var icon = tr.querySelector('.st-status-icon');
+    if (icon) { icon.className = 'st-status-icon pending'; icon.textContent = '●'; }
+  }
 
   var cnt = Object.keys(_p6.dirty).length;
   var btn = document.getElementById('p6-save-btn');
   var dc  = document.getElementById('p6-dirty-count');
   if (btn) { btn.disabled = cnt === 0; }
   if (dc)  { dc.style.display = cnt > 0 ? '' : 'none'; dc.textContent = '● ' + cnt + ' unsaved'; }
-  _p6UpdateChips();
+
+  // Update chips
+  var rows = document.querySelectorAll('#p6-score-tbody tr[data-name]');
+  var pend = 0, saved = 0;
+  rows.forEach(function(r) { if (r.classList.contains('row-dirty')) pend++; else if (r.classList.contains('row-saved')) saved++; });
+  var cp = document.getElementById('p6ChipPending'); if (cp) cp.textContent = pend;
+  var cs = document.getElementById('p6ChipSaved');   if (cs) cs.textContent = saved;
 }
 
 function p6SaveScores() {
   if (!Object.keys(_p6.dirty).length) return;
 
-  var wk     = _p6.weekLabel;
-  var scores = [];
+  var wk      = _p6.weekLabel;
+  var scores  = [];
+  var dirtyPairs = {};
+  Object.keys(_p6.dirty).forEach(function(k) {
+    var p = k.split('|'); dirtyPairs[p[0] + '|' + p[1]] = true;
+  });
+
   var stuMap = {};
   _p6.students.forEach(function(s){ stuMap[s.student_id] = true; });
 
-  // Seed from existing
-  var pairs = {};
-  _p6.existing.filter(function(r){ return String(r.week_label).trim() === wk; })
-    .forEach(function(r) {
-      var k = String(r.student_id).trim() + '|' + String(r.subject_id).trim();
-      pairs[k] = {
-        test1: r.test1 !== '' && r.test1 !== null && r.test1 !== undefined ? Number(r.test1) : '',
-        test2: r.test2 !== '' && r.test2 !== null && r.test2 !== undefined ? Number(r.test2) : ''
-      };
-    });
-
-  // Apply dirty
-  Object.keys(_p6.dirty).forEach(function(key) {
-    var parts = key.split('|'); // sid|subj|testN
-    var pk    = parts[0] + '|' + parts[1];
-    if (!pairs[pk]) pairs[pk] = { test1: '', test2: '' };
-    pairs[pk][parts[2]] = _p6.dirty[key];
-  });
-
-  Object.keys(pairs).forEach(function(pk) {
-    var parts = pk.split('|');
-    if (!stuMap[parts[0]]) return;
-    scores.push({ student_id: parts[0], subject: parts[1], test1: pairs[pk].test1, test2: pairs[pk].test2 });
+  Object.keys(dirtyPairs).forEach(function(pk) {
+    var p = pk.split('|'), sid = p[0], subj = p[1];
+    if (!stuMap[sid]) return;
+    var base = { test1: '', test2: '' };
+    for (var i = 0; i < _p6.existing.length; i++) {
+      var r = _p6.existing[i];
+      if (String(r.week_label).trim() === wk && String(r.student_id).trim() === sid && String(r.subject_id).trim() === subj) {
+        base.test1 = (r.test1 !== '' && r.test1 !== null && r.test1 !== undefined) ? Number(r.test1) : '';
+        base.test2 = (r.test2 !== '' && r.test2 !== null && r.test2 !== undefined) ? Number(r.test2) : '';
+        break;
+      }
+    }
+    var k1 = sid + '|' + subj + '|test1', k2 = sid + '|' + subj + '|test2';
+    if (_p6.dirty.hasOwnProperty(k1)) base.test1 = _p6.dirty[k1];
+    if (_p6.dirty.hasOwnProperty(k2)) base.test2 = _p6.dirty[k2];
+    scores.push({ student_id: sid, subject: subj, test1: base.test1, test2: base.test2 });
   });
 
   if (!scores.length) { showToast('Nothing to save', 'err'); return; }
@@ -5102,24 +5079,26 @@ function p6SaveScores() {
       var dc = document.getElementById('p6-dirty-count');
       if (dc) dc.style.display = 'none';
 
+      // Merge saved values into local cache
       scores.forEach(function(sc) {
         var found = false;
         for (var i = 0; i < _p6.existing.length; i++) {
           var r = _p6.existing[i];
-          if (String(r.week_label).trim()===wk && String(r.student_id).trim()===sc.student_id && String(r.subject_id).trim()===sc.subject) {
+          if (String(r.week_label).trim() === wk && String(r.student_id).trim() === sc.student_id && String(r.subject_id).trim() === sc.subject) {
             r.test1 = sc.test1; r.test2 = sc.test2; found = true; break;
           }
         }
-        if (!found) {
-          _p6.existing.push({ week_label: wk, student_id: sc.student_id, subject_id: sc.subject,
-            class_id: _p6.classId, term_id: _p6.termId, test1: sc.test1, test2: sc.test2 });
-        }
+        if (!found) _p6.existing.push({ week_label: wk, student_id: sc.student_id, subject_id: sc.subject, class_id: _p6.classId, term_id: _p6.termId, test1: sc.test1, test2: sc.test2 });
       });
+
+      // Update week progress
       var filled = _p6.existing.filter(function(r){
-        return String(r.week_label).trim()===wk && (r.test1!==''&&r.test1!==null&&r.test1!==undefined||r.test2!==''&&r.test2!==null&&r.test2!==undefined);
+        return String(r.week_label).trim() === wk && (r.test1 !== '' && r.test1 !== null && r.test1 !== undefined || r.test2 !== '' && r.test2 !== null && r.test2 !== undefined);
       }).length;
       _p6.weekProgress[wk] = { filled: filled, total: _p6.students.length };
-      _p6RenderScoreTable();
+
+      // Re-render table in-place (stay in focus pane — do NOT go back to picker)
+      _p6RenderTable();
     })
 }
 
