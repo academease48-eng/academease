@@ -2406,16 +2406,24 @@ function renderMarksEntry(opts) {
         rowIdx[String(m.student_id)+'|'+String(m.subpart_id||'')] = m;
       });
       Object.keys(activeStudentIds0).forEach(function(sid) {
-        var studentHasAny = false;
+        var studentHasAny = false; // at least one value exists
+        var studentDone   = true;  // all OPEN columns are filled
         spKeys.forEach(function(sp) {
           var sm = subpartMeta[sp];
           var m  = rowIdx[sid + '|' + sp] || {};
-          if (sm.t1Open && m.test1 !== '' && m.test1 !== null && m.test1 !== undefined) studentHasAny = true;
-          if (sm.t2Open && m.test2 !== '' && m.test2 !== null && m.test2 !== undefined) studentHasAny = true;
-          if (sm.exOpen && m.exam  !== '' && m.exam  !== null && m.exam  !== undefined) studentHasAny = true;
+          var t1v = (m.test1 != null && m.test1 !== '') ? String(m.test1) : '';
+          var t2v = (m.test2 != null && m.test2 !== '') ? String(m.test2) : '';
+          var exv = (m.exam  != null && m.exam  !== '') ? String(m.exam)  : '';
+          if (sm.t1Open) { if (t1v !== '') studentHasAny = true; else studentDone = false; }
+          if (sm.t2Open) { if (t2v !== '') studentHasAny = true; else studentDone = false; }
+          if (sm.exOpen) { if (exv !== '') studentHasAny = true; else studentDone = false; }
+          // CLOSED columns: not required but existing values mark student as "started"
+          if (!sm.t1Open && t1v !== '') studentHasAny = true;
+          if (!sm.t2Open && t2v !== '') studentHasAny = true;
+          if (!sm.exOpen && exv !== '') studentHasAny = true;
         });
-        var anyOpen = spKeys.some(function(sp){ var sm=subpartMeta[sp]; return sm.t1Open||sm.t2Open||sm.exOpen; });
-        if (anyOpen && studentHasAny) enteredSet[sid] = true;
+        // Count as entered: has at least one value AND all OPEN columns filled
+        if (studentHasAny && studentDone) enteredSet[sid] = true;
       });
     }
     var enteredCnt = Object.keys(enteredSet).length;
@@ -2533,8 +2541,11 @@ function openFocus(assignIdx) {
 
   var activeTerm = activeTerm0;
 
-  // Always prepend "All Components" tab, then add individual subparts
-  var tabs = [{ subpart_id: '__ALL__', name: 'All Components' }].concat(sps);
+  // No subparts → single flat tab (subpart_id:'') so single-subpart render path handles it.
+  // Has subparts → prepend "All Components" overview tab then individual subparts.
+  var tabs = sps.length === 0
+    ? [{ subpart_id: '', name: subj.Name || 'Marks' }]
+    : [{ subpart_id: '__ALL__', name: 'All Components' }].concat(sps);
 
   _focus.assignment = a;
   _focus.subparts   = tabs;
@@ -2619,6 +2630,10 @@ document.addEventListener('keydown', function(e){
 /* ── Build subpart tab bar ── */
 function _renderFocusTabs() {
   var tabs = _focus.subparts;
+  var tabsEl = document.getElementById('focusTabs');
+  // No-subpart subject: single tab → hide tab bar entirely (clean UX)
+  if (tabs.length <= 1) { tabsEl.innerHTML = ''; tabsEl.style.display = 'none'; return; }
+  tabsEl.style.display = '';
   var html = '';
   tabs.forEach(function(sp, i) {
     // Use a special color for "All Components", regular colors for subparts
@@ -2631,7 +2646,7 @@ function _renderFocusTabs() {
       +'<span class="ftab-max">'+maxLabel+'</span>'
       +'</div>';
   });
-  document.getElementById('focusTabs').innerHTML = html;
+  tabsEl.innerHTML = html;
 }
 
 function _getSubpartMax(subpartId) {
@@ -2661,16 +2676,25 @@ function renderFocusTab(tabIdx) {
   var sp   = _focus.subparts[tabIdx];
   var spId = sp ? String(sp.subpart_id||'') : '';
   var isAll = spId === '__ALL__';
+  var isNoSubpart = spId === ''; // subject has no subparts — use all marks unfiltered
 
   // spMarks = all marks for this class+subject
   var allMarks = _focus.marks;
-  var spMarks  = isAll ? allMarks : allMarks.filter(function(m){ return String(m.subpart_id||'')===spId; });
+  // For no-subpart subjects (spId===''), don't filter by subpart_id — use all marks directly
+  var spMarks  = (isAll || isNoSubpart) ? allMarks : allMarks.filter(function(m){ return String(m.subpart_id||'')===spId; });
 
-  // Status from sample mark — default OPEN when no rows exist so table is usable
+  // Status from sample mark — use ALL marks for this subject to find reliable status
+  // (a subpart with 0 rows would otherwise default to CLOSED)
   var sampleMark = spMarks[0] || allMarks[0] || {};
   var t1Status = sampleMark.test1_status ? String(sampleMark.test1_status).toUpperCase() : 'OPEN';
   var t2Status = sampleMark.test2_status ? String(sampleMark.test2_status).toUpperCase() : 'OPEN';
   var exStatus = sampleMark.exam_status  ? String(sampleMark.exam_status).toUpperCase()  : 'OPEN';
+  // Upgrade: if ANY mark row says OPEN, treat it as OPEN (catches subparts with 0 rows)
+  allMarks.forEach(function(mk){
+    if (String(mk.test1_status||'').toUpperCase()==='OPEN') t1Status='OPEN';
+    if (String(mk.test2_status||'').toUpperCase()==='OPEN') t2Status='OPEN';
+    if (String(mk.exam_status ||'').toUpperCase()==='OPEN') exStatus='OPEN';
+  });
   var anyOpen  = t1Status==='OPEN'||t2Status==='OPEN'||exStatus==='OPEN';
 
   document.getElementById('bannerClosed').style.display   = anyOpen ? 'none' : 'flex';
@@ -2833,11 +2857,53 @@ function _renderFocusPage() {
   var pendingCnt = 0, savedCnt = 0, filledCnt = 0, totalSum = 0;
   var html = '';
 
-  // Build marks-by-student index for single-subpart mode
+  // Build marks-by-student index for single-subpart/no-subpart mode — MUST be before filled count loop
   var marksByStudent = {};
   if (!isAll) {
     (_focus._spMarks||[]).forEach(function(m){ marksByStudent[m.student_id] = m; });
   }
+
+  // ── Compute filled count: student counts when all OPEN columns have values ──
+  // OPEN status = required for entry. CLOSED = locked (existing values still count as "started").
+  // visibleCols only controls which columns are shown — not what's required.
+  var allFilledCount = 0;
+  filtered.forEach(function(st) {
+    var studentHasAny = false; // at least one value exists (started)
+    var studentDone   = true;  // all OPEN columns are filled (complete)
+    if (isAll && spMeta) {
+      spMeta.forEach(function(sm) {
+        var m     = sm.rows.find(function(r){ return String(r.student_id)===String(st.student_id); }) || null;
+        var mId   = m && m.mark_id ? String(m.mark_id) : ('new|'+st.student_id+'|'+sm.sp.subpart_id);
+        var dirty = _focus.dirty[mId] || {};
+        var t1v   = dirty.test1 !== undefined ? dirty.test1 : (m && m.test1 !== undefined ? String(m.test1) : '');
+        var t2v   = dirty.test2 !== undefined ? dirty.test2 : (m && m.test2 !== undefined ? String(m.test2) : '');
+        var exv   = dirty.exam  !== undefined ? dirty.exam  : (m && m.exam  !== undefined ? String(m.exam)  : '');
+        if (sm.t1Stat === 'OPEN') { if (t1v !== '') studentHasAny = true; else studentDone = false; }
+        if (sm.t2Stat === 'OPEN') { if (t2v !== '') studentHasAny = true; else studentDone = false; }
+        if (sm.exStat === 'OPEN') { if (exv !== '') studentHasAny = true; else studentDone = false; }
+        if (sm.t1Stat !== 'OPEN' && t1v !== '') studentHasAny = true;
+        if (sm.t2Stat !== 'OPEN' && t2v !== '') studentHasAny = true;
+        if (sm.exStat !== 'OPEN' && exv !== '') studentHasAny = true;
+      });
+    } else {
+      var m2    = marksByStudent[st.student_id] || null;
+      var mId2  = m2 && m2.mark_id ? String(m2.mark_id) : ('new|'+st.student_id+'|'+(_focus._spId||''));
+      var dirty2= _focus.dirty[mId2] || {};
+      var t1v2  = dirty2.test1 !== undefined ? dirty2.test1 : (m2 && m2.test1 !== undefined ? String(m2.test1) : '');
+      var t2v2  = dirty2.test2 !== undefined ? dirty2.test2 : (m2 && m2.test2 !== undefined ? String(m2.test2) : '');
+      var exv2  = dirty2.exam  !== undefined ? dirty2.exam  : (m2 && m2.exam  !== undefined ? String(m2.exam)  : '');
+      if (t1Stat === 'OPEN') { if (t1v2 !== '') studentHasAny = true; else studentDone = false; }
+      if (t2Stat === 'OPEN') { if (t2v2 !== '') studentHasAny = true; else studentDone = false; }
+      if (exStat === 'OPEN') { if (exv2 !== '') studentHasAny = true; else studentDone = false; }
+      if (t1Stat !== 'OPEN' && t1v2 !== '') studentHasAny = true;
+      if (t2Stat !== 'OPEN' && t2v2 !== '') studentHasAny = true;
+      if (exStat !== 'OPEN' && exv2 !== '') studentHasAny = true;
+    }
+    if (studentHasAny && studentDone) allFilledCount++;
+  });
+  _focus._filledCount    = allFilledCount;
+  _focus._totalCount     = _focus.students.length;
+  _focus._allFilledCount = allFilledCount;
 
   pageStudents.forEach(function(st, i) {
     var rowNum = start+i+1;
@@ -2850,13 +2916,13 @@ function _renderFocusPage() {
       var cells = '';
 
       spMeta.forEach(function(sm) {
-        var m = sm.rows.find(function(r){ return String(r.student_id)===String(st.student_id); }) || {};
-        var mId = m.mark_id || '';
+        var m = sm.rows.find(function(r){ return String(r.student_id)===String(st.student_id); }) || null;
+        var mId = m && m.mark_id ? String(m.mark_id) : ('new|'+st.student_id+'|'+sm.sp.subpart_id);
         var dirty = _focus.dirty[mId] || {};
 
-        var t1v = dirty.test1 !== undefined ? dirty.test1 : (m.test1 !== undefined ? String(m.test1) : '');
-        var t2v = dirty.test2 !== undefined ? dirty.test2 : (m.test2 !== undefined ? String(m.test2) : '');
-        var exv = dirty.exam  !== undefined ? dirty.exam  : (m.exam  !== undefined ? String(m.exam)  : '');
+        var t1v = dirty.test1 !== undefined ? dirty.test1 : (m && m.test1 !== undefined ? String(m.test1) : '');
+        var t2v = dirty.test2 !== undefined ? dirty.test2 : (m && m.test2 !== undefined ? String(m.test2) : '');
+        var exv = dirty.exam  !== undefined ? dirty.exam  : (m && m.exam  !== undefined ? String(m.exam)  : '');
 
         var t1val = parseFloat(t1v)||0, t2val = parseFloat(t2v)||0, exval = parseFloat(exv)||0;
         var spTotal = (sm.t1Max?t1val:0)+(sm.t2Max?t2val:0)+(sm.exMax?exval:0);
@@ -2903,7 +2969,26 @@ function _renderFocusPage() {
       if (hasAny) { filledCnt++; totalSum += grandTotal; }
       if (rowPending) pendingCnt++; else if (rowSaved) savedCnt++;
 
-      var rowClass = rowPending ? 'row-dirty' : (rowSaved ? 'row-saved' : '');
+      // row-filled = strict: every open column has a value
+      var rowStrictDone = (function() {
+        var done = true, open = false;
+        spMeta.forEach(function(sm) {
+          var t1o = sm.t1Stat==='OPEN', t2o = sm.t2Stat==='OPEN', exo = sm.exStat==='OPEN';
+          if (!t1o && !t2o && !exo) return;
+          open = true;
+          var m2    = sm.rows.find(function(r){ return String(r.student_id)===String(st.student_id); }) || null;
+          var mId2  = m2 && m2.mark_id ? String(m2.mark_id) : ('new|'+st.student_id+'|'+sm.sp.subpart_id);
+          var d2    = _focus.dirty[mId2] || {};
+          var t1v2  = d2.test1 !== undefined ? d2.test1 : (m2 && m2.test1 !== undefined ? String(m2.test1) : '');
+          var t2v2  = d2.test2 !== undefined ? d2.test2 : (m2 && m2.test2 !== undefined ? String(m2.test2) : '');
+          var exv2  = d2.exam  !== undefined ? d2.exam  : (m2 && m2.exam  !== undefined ? String(m2.exam)  : '');
+          if (t1o && t1v2==='') done = false;
+          if (t2o && t2v2==='') done = false;
+          if (exo && exv2==='') done = false;
+        });
+        return open && done;
+      })();
+      var rowClass = (rowPending ? 'row-dirty' : (rowSaved ? 'row-saved' : '')) + (rowStrictDone ? ' row-filled' : '');
       html += '<tr class="'+rowClass+'">';
       html += '<td class="cell-num">'+rowNum+'</td>';
       html += '<td class="cell-sticky" style="padding:0">'
@@ -2933,12 +3018,12 @@ function _renderFocusPage() {
       return;
     }
 
-    var m    = marksByStudent[st.student_id] || {};
-    var mId  = m.mark_id || '';
+    var m    = marksByStudent[st.student_id] || null;
+    var mId  = m && m.mark_id ? String(m.mark_id) : ('new|'+st.student_id+'|'+(_focus._spId||''));
     var dirty = _focus.dirty[mId] || {};
-    var t1v  = dirty.test1 !== undefined ? dirty.test1 : (m.test1 !== undefined ? String(m.test1) : '');
-    var t2v  = dirty.test2 !== undefined ? dirty.test2 : (m.test2 !== undefined ? String(m.test2) : '');
-    var exv  = dirty.exam  !== undefined ? dirty.exam  : (m.exam  !== undefined ? String(m.exam)  : '');
+    var t1v  = dirty.test1 !== undefined ? dirty.test1 : (m && m.test1 !== undefined ? String(m.test1) : '');
+    var t2v  = dirty.test2 !== undefined ? dirty.test2 : (m && m.test2 !== undefined ? String(m.test2) : '');
+    var exv  = dirty.exam  !== undefined ? dirty.exam  : (m && m.exam  !== undefined ? String(m.exam)  : '');
 
     var hasMark = t1v!==''||t2v!==''||exv!=='';
     var isDirty = _focus.dirty[mId] !== undefined;
@@ -2956,7 +3041,15 @@ function _renderFocusPage() {
     var tagLabel = isDirty ? 'Pending' : (hasMark ? 'Saved' : 'Empty');
     var spColor  = SUBPART_COLORS[(_focus.activeTab-1+SUBPART_COLORS.length)%SUBPART_COLORS.length];
 
-    var rowClass2 = isDirty ? 'row-dirty' : (hasMark ? 'row-saved' : '');
+    var rowStrictDone2 = (function(){
+      var t1o = _focus._t1Status==='OPEN', t2o = _focus._t2Status==='OPEN', exo = _focus._exStatus==='OPEN';
+      if (!t1o && !t2o && !exo) return false;
+      if (t1o && t1v==='') return false;
+      if (t2o && t2v==='') return false;
+      if (exo && exv==='') return false;
+      return true;
+    })();
+    var rowClass2 = (isDirty ? 'row-dirty' : (hasMark ? 'row-saved' : '')) + (rowStrictDone2 ? ' row-filled' : '');
     html += '<tr class="'+rowClass2+'">';
     html += '<td class="cell-num">'+rowNum+'</td>';
     html += '<td class="cell-sticky" style="padding:0">'
