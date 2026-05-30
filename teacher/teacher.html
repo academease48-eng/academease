@@ -2640,10 +2640,42 @@ function _renderFocusTabs() {
     var col = sp.subpart_id === '__ALL__' ? '#6b7280' : SUBPART_COLORS[i % SUBPART_COLORS.length];
     var maxInfo = _getSubpartMax(sp.subpart_id);
     var maxLabel = maxInfo.total ? ' /'+maxInfo.total : '';
+
+    // Build lock badges for closed columns (skip for __ALL__ overview tab)
+    var lockBadges = '';
+    if (sp.subpart_id !== '__ALL__') {
+      // Find a sample mark row for this subpart to read status
+      var sampleRow = _focus.marks.find(function(m){ return String(m.subpart_id||'')===String(sp.subpart_id||''); }) || _focus.marks[0] || {};
+      var t1s = String(sampleRow.test1_status||'OPEN').toUpperCase();
+      var t2s = String(sampleRow.test2_status||'OPEN').toUpperCase();
+      var exs = String(sampleRow.exam_status ||'OPEN').toUpperCase();
+      var closedParts = [];
+      if (maxInfo.t1 && t1s !== 'OPEN') closedParts.push('T1');
+      if (maxInfo.t2 && t2s !== 'OPEN') closedParts.push('T2');
+      if (maxInfo.ex && exs !== 'OPEN') closedParts.push('Exam');
+      if (closedParts.length) {
+        lockBadges = '<span style="display:inline-flex;align-items:center;gap:2px;margin-left:5px;background:#fee2e2;color:#dc2626;font-size:9.5px;font-weight:800;padding:1px 5px;border-radius:99px;letter-spacing:.2px;border:1px solid #fca5a5">'
+          +'🔒 '+closedParts.join(' · ')
+          +'</span>';
+      }
+    } else {
+      // For __ALL__ tab: show a summary lock badge if any column is closed
+      var anyLocked = false, lockedNames = [];
+      _focus.marks.forEach(function(m){
+        if (String(m.test1_status||'').toUpperCase() !== 'OPEN' && parseFloat(m.test1_max)) anyLocked = true;
+        if (String(m.test2_status||'').toUpperCase() !== 'OPEN' && parseFloat(m.test2_max)) anyLocked = true;
+        if (String(m.exam_status ||'').toUpperCase() !== 'OPEN' && parseFloat(m.exam_max))  anyLocked = true;
+      });
+      if (anyLocked) {
+        lockBadges = '<span style="display:inline-flex;align-items:center;gap:2px;margin-left:5px;background:#fee2e2;color:#dc2626;font-size:9.5px;font-weight:800;padding:1px 5px;border-radius:99px;letter-spacing:.2px;border:1px solid #fca5a5">🔒 Some locked</span>';
+      }
+    }
+
     html += '<div class="ftab'+(i===_focus.activeTab?' active':'')+'" onclick="renderFocusTab('+i+')">'
       +'<span class="ftab-dot" style="background:'+col+'"></span>'
       +esc(sp.name||'Component')
       +'<span class="ftab-max">'+maxLabel+'</span>'
+      +lockBadges
       +'</div>';
   });
   tabsEl.innerHTML = html;
@@ -3369,34 +3401,84 @@ function _updateFocusProgressBar() {
   var allTotal  = students.length;
   if (!allTotal) { strip.style.display = 'none'; return; }
 
-  var isAll       = _focus._isAllComponents;
-  var spMeta      = _focus._spMeta;
+  var isAll    = _focus._isAllComponents;
+  var spMeta   = _focus._spMeta;
+  var t1Stat   = _focus._t1Status;
+  var t2Stat   = _focus._t2Status;
+  var exStat   = _focus._exStatus;
+
+  // Build marks-by-student index for single-subpart mode
   var marksByStudent = {};
   if (!isAll && _focus._spMarks) {
     _focus._spMarks.forEach(function(m){ marksByStudent[m.student_id] = m; });
   }
 
+  // Determine whether ANY column is open for entry
+  var anyColOpen = false;
+  if (isAll && spMeta) {
+    spMeta.forEach(function(sm){
+      if (sm.t1Stat==='OPEN'||sm.t2Stat==='OPEN'||sm.exStat==='OPEN') anyColOpen = true;
+    });
+  } else {
+    anyColOpen = (t1Stat==='OPEN'||t2Stat==='OPEN'||exStat==='OPEN');
+  }
+
+  // If ALL columns are locked (nothing is OPEN), show locked state — not 100%
+  if (!anyColOpen) {
+    strip.style.display = '';
+    fill.style.width = '100%';
+    fill.style.background = '#94a3b8';
+    fill.classList.remove('complete','active','pulsing');
+    pctEl.textContent = '🔒 Locked';
+    pctEl.classList.remove('complete');
+    lbl.textContent = 'All columns closed — no entry allowed';
+    strip.classList.remove('complete');
+    if (icon) icon.textContent = '🔒';
+    return;
+  }
+
+  // Restore fill colour in case it was previously set to locked grey
+  fill.style.background = '';
+
+  // Count students: only "filled" when ALL OPEN columns have a value
   var allFilled = 0;
   students.forEach(function(st) {
-    var hasDirty = false, hasSaved = false;
+    var studentHasAny = false;
+    var studentDone   = true;
+
     if (isAll && spMeta) {
       spMeta.forEach(function(sm) {
-        var m = sm.rows.find(function(r){ return String(r.student_id)===String(st.student_id); }) || {};
-        var mId = m.mark_id || '';
-        if (_focus.dirty[mId]) hasDirty = true;
-        else if (m.test1!==''&&m.test1!==null&&m.test1!==undefined
-              || m.test2!==''&&m.test2!==null&&m.test2!==undefined
-              || m.exam!==''&&m.exam!==null&&m.exam!==undefined) hasSaved = true;
+        var m   = sm.rows.find(function(r){ return String(r.student_id)===String(st.student_id); }) || null;
+        var mId = m && m.mark_id ? String(m.mark_id) : ('new|'+st.student_id+'|'+sm.sp.subpart_id);
+        var dirty = _focus.dirty[mId] || {};
+        var t1v = dirty.test1 !== undefined ? dirty.test1 : (m && m.test1 !== undefined && m.test1 !== null ? String(m.test1) : '');
+        var t2v = dirty.test2 !== undefined ? dirty.test2 : (m && m.test2 !== undefined && m.test2 !== null ? String(m.test2) : '');
+        var exv = dirty.exam  !== undefined ? dirty.exam  : (m && m.exam  !== undefined && m.exam  !== null ? String(m.exam)  : '');
+        // OPEN columns: required for "done"; must have value to contribute to "started"
+        if (sm.t1Stat==='OPEN') { if (t1v!=='') studentHasAny=true; else studentDone=false; }
+        if (sm.t2Stat==='OPEN') { if (t2v!=='') studentHasAny=true; else studentDone=false; }
+        if (sm.exStat==='OPEN') { if (exv!=='') studentHasAny=true; else studentDone=false; }
+        // CLOSED columns with values count as "started" but NOT required
+        if (sm.t1Stat!=='OPEN' && t1v!=='') studentHasAny=true;
+        if (sm.t2Stat!=='OPEN' && t2v!=='') studentHasAny=true;
+        if (sm.exStat!=='OPEN' && exv!=='') studentHasAny=true;
       });
     } else {
-      var m = marksByStudent[st.student_id] || {};
-      var mId = m.mark_id || '';
-      if (_focus.dirty[mId]) hasDirty = true;
-      else if (m.test1!==''&&m.test1!==null&&m.test1!==undefined
-            || m.test2!==''&&m.test2!==null&&m.test2!==undefined
-            || m.exam!==''&&m.exam!==null&&m.exam!==undefined) hasSaved = true;
+      var m   = marksByStudent[st.student_id] || null;
+      var mId = m && m.mark_id ? String(m.mark_id) : ('new|'+st.student_id+'|'+(_focus._spId||''));
+      var dirty = _focus.dirty[mId] || {};
+      var t1v = dirty.test1 !== undefined ? dirty.test1 : (m && m.test1 !== undefined && m.test1 !== null ? String(m.test1) : '');
+      var t2v = dirty.test2 !== undefined ? dirty.test2 : (m && m.test2 !== undefined && m.test2 !== null ? String(m.test2) : '');
+      var exv = dirty.exam  !== undefined ? dirty.exam  : (m && m.exam  !== undefined && m.exam  !== null ? String(m.exam)  : '');
+      if (t1Stat==='OPEN') { if (t1v!=='') studentHasAny=true; else studentDone=false; }
+      if (t2Stat==='OPEN') { if (t2v!=='') studentHasAny=true; else studentDone=false; }
+      if (exStat==='OPEN') { if (exv!=='') studentHasAny=true; else studentDone=false; }
+      if (t1Stat!=='OPEN' && t1v!=='') studentHasAny=true;
+      if (t2Stat!=='OPEN' && t2v!=='') studentHasAny=true;
+      if (exStat!=='OPEN' && exv!=='') studentHasAny=true;
     }
-    if (hasDirty || hasSaved) allFilled++;
+    // Only count as filled when student has at least one value AND all OPEN cols are done
+    if (studentHasAny && studentDone) allFilled++;
   });
 
   strip.style.display = '';
