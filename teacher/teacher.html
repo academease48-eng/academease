@@ -506,10 +506,6 @@
       0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}
       50%{box-shadow:0 0 0 5px rgba(220,38,38,0)}
     }
-    /* Urgent progress bar — amber→red gradient */
-    .course-card.urgent .cc-prog-bar-fill{
-      background:linear-gradient(90deg,#f59e0b,#ef4444) !important;
-    }
 
     /* ── NOT-STARTED card (0% — nothing submitted yet) ── */
     .course-card.not-started{
@@ -531,34 +527,186 @@
       0%,100%{box-shadow:0 0 0 0 rgba(217,119,6,.4)}
       50%{box-shadow:0 0 0 5px rgba(217,119,6,0)}
     }
-    /* Not-started progress bar track hint */
-    .course-card.not-started .cc-prog-bar-fill{
-      background:#f59e0b !important;
-    }
 
-    /* ── BLOCKED card (greyed-out — must fix urgent cards first) ── */
+    /* ── BLOCKED card — dimmed + warning modal on click ── */
+    /* warning modal. Hard-block only happens at Save level inside focus pane.  */
     .course-card.blocked{
-      opacity:.42 !important;
-      filter:grayscale(60%) !important;
-      cursor:not-allowed !important;
-      pointer-events:none !important;
-      transform:none !important;
-      box-shadow:none !important;
+      opacity:.52;
+      filter:grayscale(45%);
       border-color:var(--line) !important;
+      box-shadow:none !important;
+      cursor:pointer;
+      position:relative;
     }
     .course-card.blocked:hover{
-      transform:none !important;
-      box-shadow:none !important;
+      opacity:.75;
+      filter:grayscale(20%);
+      border-color:#94a3b8 !important;
+      box-shadow:0 2px 10px rgba(0,0,0,.08) !important;
+      transform:translateY(-1px);
     }
-    /* Lock overlay chip */
+    /* Lock overlay chip — shows reason tooltip on hover */
     .course-card-lock{
       position:absolute;top:10px;right:10px;
-      background:rgba(156,163,175,.22);
-      color:#6b7280;
-      font-size:11px;font-weight:700;
-      padding:3px 8px;border-radius:99px;
+      background:rgba(100,116,139,.15);
+      color:#64748b;
+      font-size:10.5px;font-weight:700;
+      padding:3px 9px 3px 7px;border-radius:99px;
       display:flex;align-items:center;gap:4px;
       pointer-events:none;
+      border:1px solid rgba(100,116,139,.18);
+    }
+    /* ── BLOCKED WARNING MODAL ── */
+    #blockedModal{
+      display:none;position:fixed;inset:0;
+      background:rgba(17,24,39,.45);
+      backdrop-filter:blur(3px);
+      z-index:9950;align-items:center;justify-content:center;padding:20px;
+    }
+    #blockedModal.open{ display:flex; }
+    .blocked-modal-box{
+      background:#fff;border-radius:18px;
+      width:100%;max-width:360px;
+      padding:26px 24px 20px;
+      box-shadow:0 24px 64px rgba(0,0,0,.18),0 8px 24px rgba(220,38,38,.12);
+      border:1.5px solid #fca5a5;
+      animation:progIn .28s cubic-bezier(.22,.68,0,1.2);
+    }
+    .bm-icon{ font-size:36px; text-align:center; margin-bottom:12px; }
+    .bm-title{
+      font-size:16px;font-weight:800;color:#111827;
+      text-align:center;margin-bottom:6px;letter-spacing:-.3px;
+    }
+    .bm-body{
+      font-size:12.5px;color:#6b7280;font-weight:500;
+      text-align:center;line-height:1.55;margin-bottom:18px;
+    }
+    .bm-urgent-list{
+      background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;
+      padding:10px 14px;margin-bottom:18px;
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .bm-urgent-item{
+      display:flex;align-items:center;gap:8px;
+      font-size:12px;font-weight:700;color:#dc2626;
+    }
+    .bm-urgent-dot{
+      width:7px;height:7px;border-radius:50%;background:#dc2626;flex-shrink:0;
+    }
+    .bm-urgent-badges{
+      margin-left:auto;display:flex;gap:4px;
+    }
+    .bm-badge{
+      font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:99px;
+    }
+    .bm-badge.t1{ background:#dbeafe;color:#1d4ed8; }
+    .bm-badge.t2{ background:#ede9fe;color:#6d28d9; }
+    .bm-badge.ex{ background:#d1fae5;color:#047857; }
+    .bm-btn-row{ display:flex;gap:8px; }
+    .bm-btn-go{
+      flex:1;padding:10px;background:#dc2626;color:#fff;
+      border:none;border-radius:10px;font-size:13px;font-weight:700;
+      cursor:pointer;font-family:var(--font);transition:background .15s;
+    }
+    .bm-btn-go:hover{ background:#b91c1c; }
+    .bm-btn-cancel{
+      padding:10px 16px;background:var(--bg);color:var(--muted);
+      border:1.5px solid var(--line);border-radius:10px;font-size:13px;font-weight:700;
+      cursor:pointer;font-family:var(--font);transition:all .15s;
+    }
+    .bm-btn-cancel:hover{ border-color:#94a3b8;color:var(--ink); }
+
+    /* ══ COURSE CARD — PER-ASSESSMENT PROGRESS BARS ══ */
+    .cc-assessment-bars{
+      display:flex;flex-direction:column;gap:5px;
+      margin:8px 0 10px;
+    }
+    .cc-abar-row{
+      display:flex;align-items:center;gap:7px;
+    }
+    /* Label pill */
+    .cc-abar-label{
+      font-size:9.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+      min-width:36px;text-align:right;flex-shrink:0;
+      color:#64748b;
+    }
+    /* Track */
+    .cc-abar-track{
+      flex:1;height:5px;
+      background:#e2e8f0;
+      border-radius:99px;overflow:hidden;
+      position:relative;
+    }
+    .cc-abar-fill{
+      height:100%;border-radius:99px;
+      transition:width .45s cubic-bezier(.34,1.06,.64,1);
+      position:relative;
+    }
+    /* Fill color variants — in-progress */
+    .cc-abar-fill.t1{ background:linear-gradient(90deg,#2563eb,#60a5fa); }
+    .cc-abar-fill.t2{ background:linear-gradient(90deg,#7c3aed,#a78bfa); }
+    .cc-abar-fill.ex{ background:linear-gradient(90deg,#059669,#34d399); }
+    /* Urgent card fills → red */
+    .course-card.urgent .cc-abar-fill.t1{ background:linear-gradient(90deg,#f59e0b,#ef4444) !important; }
+    .course-card.urgent .cc-abar-fill.t2{ background:linear-gradient(90deg,#f59e0b,#ef4444) !important; }
+    .course-card.urgent .cc-abar-fill.ex{ background:linear-gradient(90deg,#f59e0b,#ef4444) !important; }
+    /* Fill color variants — 100% complete → all green */
+    .cc-abar-fill.t1-done,
+    .cc-abar-fill.t2-done,
+    .cc-abar-fill.ex-done{
+      background:linear-gradient(90deg,#059669,#34d399) !important;
+      animation:none !important;
+    }
+    /* 100% pct label — green */
+    .cc-abar-pct.done-pct{ color:#059669 !important; font-weight:900; }
+    /* 100% track — faint green background */
+    .cc-abar-row:has(.cc-abar-fill.t1-done) .cc-abar-track,
+    .cc-abar-row:has(.cc-abar-fill.t2-done) .cc-abar-track,
+    .cc-abar-row:has(.cc-abar-fill.ex-done) .cc-abar-track{
+      background:rgba(5,150,105,.12);
+    }
+    /* 100% label — green */
+    .cc-abar-row:has(.cc-abar-fill.t1-done) .cc-abar-label,
+    .cc-abar-row:has(.cc-abar-fill.t2-done) .cc-abar-label,
+    .cc-abar-row:has(.cc-abar-fill.ex-done) .cc-abar-label{ color:#059669; font-weight:900; }
+    /* Glow tip dot */
+    .cc-abar-fill::after{
+      content:'';
+      position:absolute;right:-1px;top:50%;transform:translateY(-50%);
+      width:7px;height:7px;border-radius:50%;
+      background:#fff;
+      border:2px solid currentColor;
+      opacity:0;
+      transition:opacity .3s;
+    }
+    .cc-abar-fill.t1::after{ border-color:#3b82f6; }
+    .cc-abar-fill.t2::after{ border-color:#8b5cf6; }
+    .cc-abar-fill.ex::after{ border-color:#10b981; }
+    .cc-abar-fill.active::after{ opacity:1; }
+    /* Pct label */
+    .cc-abar-pct{
+      font-size:9.5px;font-weight:800;
+      min-width:28px;text-align:right;flex-shrink:0;
+      font-variant-numeric:tabular-nums;
+      color:#94a3b8;
+    }
+    .cc-abar-pct.t1-pct.has{ color:#2563eb; }
+    .cc-abar-pct.t2-pct.has{ color:#7c3aed; }
+    .cc-abar-pct.ex-pct.has{ color:#059669; }
+    /* CLOSED badge on label */
+    .cc-abar-label.closed-label{ color:#cbd5e1; }
+    .cc-abar-track.closed-track{ background:#f1f5f9; }
+    .cc-abar-fill.closed-fill{ background:#cbd5e1!important; }
+    /* Complete check */
+    .cc-abar-check{
+      font-size:11px;flex-shrink:0;opacity:0;transition:opacity .25s;
+    }
+    .cc-abar-check.show{ opacity:1; }
+    /* Not-started card assessment bars */
+    .course-card.not-started .cc-abar-fill.t1,
+    .course-card.not-started .cc-abar-fill.t2,
+    .course-card.not-started .cc-abar-fill.ex{
+      background:#f59e0b !important;
     }
 
     /* ══════════════════════════════════
@@ -1918,6 +2066,20 @@
   </div>
 </div>
 
+<!-- ── BLOCKED WARNING MODAL ── -->
+<div id="blockedModal">
+  <div class="blocked-modal-box">
+    <div class="bm-icon">🔒</div>
+    <div class="bm-title">Finish Incomplete Marks First</div>
+    <div class="bm-body">You have started entering marks but haven't completed all students. Please finish the following before moving to another subject.</div>
+    <div class="bm-urgent-list" id="bmUrgentList"></div>
+    <div class="bm-btn-row">
+      <button class="bm-btn-go" id="bmGoBtn" onclick="blockedModalGoFix()">Go Fix Now →</button>
+      <button class="bm-btn-cancel" onclick="closeBlockedModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <script>
@@ -2384,8 +2546,9 @@ function renderMarksEntry(opts) {
       totalStudents++;
     });
 
+    // % = students who have ALL open columns filled (per subpart)
     // Group rows by subpart so we can check each subpart's open cols independently
-    var subpartMeta = {};
+    var subpartMeta = {}; // subpartId → { t1Open, t2Open, exOpen }
     mrows.forEach(function(m) {
       var sp = String(m.subpart_id || '');
       if (!subpartMeta[sp]) {
@@ -2399,10 +2562,11 @@ function renderMarksEntry(opts) {
     var spKeys = Object.keys(subpartMeta);
 
     var enteredSet = {};
+    var rowIdx = {};
     if (spKeys.length === 0) {
       // No mark rows at all — nobody filled
     } else {
-      var rowIdx = {};
+      // Index rows: "studentId|subpartId" → mark row
       mrows.forEach(function(m){
         rowIdx[String(m.student_id)+'|'+String(m.subpart_id||'')] = m;
       });
@@ -2418,7 +2582,6 @@ function renderMarksEntry(opts) {
           if (sm.t1Open) { if (t1v !== '') studentHasAny = true; else studentDone = false; }
           if (sm.t2Open) { if (t2v !== '') studentHasAny = true; else studentDone = false; }
           if (sm.exOpen) { if (exv !== '') studentHasAny = true; else studentDone = false; }
-          // CLOSED columns: not required but existing values mark student as "started"
           if (!sm.t1Open && t1v !== '') studentHasAny = true;
           if (!sm.t2Open && t2v !== '') studentHasAny = true;
           if (!sm.exOpen && exv !== '') studentHasAny = true;
@@ -2428,25 +2591,73 @@ function renderMarksEntry(opts) {
       });
     }
     var enteredCnt = Object.keys(enteredSet).length;
-    var pctFill    = totalStudents > 0 ? Math.min(100, Math.round((enteredCnt / totalStudents) * 100)) : 0;
+    var _pctFillLegacy = totalStudents > 0 ? Math.min(100, Math.round((enteredCnt / totalStudents) * 100)) : 0;
     var missing    = totalStudents - enteredCnt;
+
+    // ── Per-assessment filled counts ──────────────────────────────────────
+    function _countFilled(field) {
+      var cnt = 0;
+      Object.keys(activeStudentIds0).forEach(function(sid){
+        var hasSome = false;
+        spKeys.forEach(function(sp){
+          var row = rowIdx ? (rowIdx[sid+'|'+sp]||{}) : {};
+          var v = (row[field] != null && row[field] !== '') ? String(row[field]) : '';
+          if (v !== '') hasSome = true;
+        });
+        if (!spKeys.length) {
+          mrows.forEach(function(r){
+            if (String(r.student_id)===sid && r[field]!=null && r[field]!=='' && r[field]!==undefined) hasSome=true;
+          });
+        }
+        if (hasSome) cnt++;
+      });
+      return cnt;
+    }
+    var t1FilledCnt = _countFilled('test1');
+    var t2FilledCnt = _countFilled('test2');
+    var exFilledCnt = _countFilled('exam');
+
+    // ── Weighted average pctFill ──────────────────────────────────────────
+    // An assessment "slot" is active when it is OPEN or already has data filled.
+    var t1Active = t1Open || t1FilledCnt > 0;
+    var t2Active = t2Open || t2FilledCnt > 0;
+    var exActive = exOpen || exFilledCnt > 0;
+    var activeSlots = (t1Active?1:0) + (t2Active?1:0) + (exActive?1:0);
+    var pctFill;
+    if (!totalStudents || !activeSlots) {
+      pctFill = 0;
+    } else {
+      var filledSum = (t1Active ? t1FilledCnt : 0)
+                    + (t2Active ? t2FilledCnt : 0)
+                    + (exActive ? exFilledCnt : 0);
+      pctFill = Math.min(100, Math.round(filledSum / (activeSlots * totalStudents) * 100));
+    }
 
     return {
       t1Open:t1Open, t2Open:t2Open, exOpen:exOpen,
+      t1Active:t1Active, t2Active:t2Active, exActive:exActive,
       totalStudents:totalStudents, enteredCnt:enteredCnt,
-      pctFill:pctFill, missing:missing
+      pctFill:pctFill, missing:missing,
+      activeSlots:activeSlots,
+      t1Filled:t1FilledCnt, t2Filled:t2FilledCnt, exFilled:exFilledCnt
     };
   });
 
-  // Determine card states:
-  // urgent     = started but incomplete (0% < pct < 100%) — red, clickable
-  // notStarted = nothing entered yet (pct === 0, has students) — amber, clickable
-  // blocked    = 100% complete but other cards need attention — greyed, non-clickable
-  var hasUrgent     = cardMeta.some(function(m){ return m.pctFill > 0 && m.pctFill < 100 && m.totalStudents > 0; });
+  // ── Card state detection: per-assessment aware ─────────────────────────
+  // URGENT  = any OPEN assessment on this card has been started (>0 filled)
+  //           but is NOT yet complete (<100%). Catches T1 partial, T2 partial, Exam partial.
+  // BLOCKED = any card that is NOT the urgent one — teacher must finish pending first.
+  function _isAssessmentUrgent(m) {
+    var tot = m.totalStudents;
+    if (!tot) return false;
+    if (m.t1Open && m.t1Filled > 0 && m.t1Filled < tot) return true;
+    if (m.t2Open && m.t2Filled > 0 && m.t2Filled < tot) return true;
+    if (m.exOpen && m.exFilled > 0 && m.exFilled < tot) return true;
+    return false;
+  }
+
+  var hasUrgent     = cardMeta.some(function(m){ return _isAssessmentUrgent(m); });
   var hasNotStarted = cardMeta.some(function(m){ return m.pctFill === 0 && m.totalStudents > 0; });
-  var hasAnyStarted = cardMeta.some(function(m){ return m.pctFill > 0 && m.totalStudents > 0; });
-  // Block complete cards only when urgent (started-but-incomplete) cards exist.
-  var anyNeedsWork = hasUrgent;
 
   var html = '';
   myAssignments.forEach(function(a, idx) {
@@ -2457,28 +2668,49 @@ function renderMarksEntry(opts) {
     var clrCls= 'c'+(idx%5);
     var m     = cardMeta[idx];
 
-    var isUrgent     = m.pctFill > 0 && m.pctFill < 100 && m.totalStudents > 0;
-    var isNotStarted = m.pctFill === 0 && m.totalStudents > 0;
+    var isUrgent     = _isAssessmentUrgent(m);
+    // isNotStarted = no open assessment has ANY entry yet (truly blank card)
+    var anyStarted   = (m.t1Open && m.t1Filled > 0)
+                    || (m.t2Open && m.t2Filled > 0)
+                    || (m.exOpen && m.exFilled > 0)
+                    || m.pctFill > 0;
+    var isNotStarted = !anyStarted && m.totalStudents > 0
+                    && (m.t1Open || m.t2Open || m.exOpen);
     var isBlocked    = hasUrgent && !isUrgent;
 
-    var barColor = m.pctFill === 100 ? 'var(--green)' : m.pctFill > 0 ? 'var(--blue)' : 'var(--line)';
+    // Compute the most-meaningful missing count for urgent badge
+    var worstMissing = m.totalStudents;
+    if (isUrgent) {
+      var tot = m.totalStudents;
+      var candidates = [];
+      if (m.t1Open && m.t1Filled > 0 && m.t1Filled < tot) candidates.push(tot - m.t1Filled);
+      if (m.t2Open && m.t2Filled > 0 && m.t2Filled < tot) candidates.push(tot - m.t2Filled);
+      if (m.exOpen && m.exFilled > 0 && m.exFilled < tot) candidates.push(tot - m.exFilled);
+      if (candidates.length) worstMissing = Math.max.apply(null, candidates);
+    }
 
     var cardClass = 'course-card'
       + (isUrgent     ? ' urgent'      : '')
       + (isNotStarted ? ' not-started' : '')
       + (isBlocked    ? ' blocked'     : '');
-    var clickAttr = isBlocked ? '' : ' onclick="openFocus('+idx+')"';
+    var clickAttr = ' onclick="openFocusOrWarn('+idx+', event)"';
 
     html += '<div class="'+cardClass+'"'+clickAttr+'>';
 
+    // Only ONE badge per card — mutually exclusive states
     if (isUrgent) {
-      html += '<div class="course-card-warn">⚠ '+m.missing+' Student'+(m.missing>1?'s':'')+' Missing Marks</div>';
-    }
-    if (isNotStarted) {
-      html += '<div class="course-card-warn amber">⚠ Not Started Yet</div>';
-    }
-    if (isBlocked) {
-      html += '<div class="course-card-lock">🔒 Complete pending first</div>';
+      var urgBadges = '';
+      if (m.t1Open && m.t1Filled > 0 && m.t1Filled < m.totalStudents)
+        urgBadges += '<span style="background:rgba(255,255,255,.25);border-radius:99px;padding:1px 6px;font-size:9px;margin-left:5px">T1</span>';
+      if (m.t2Open && m.t2Filled > 0 && m.t2Filled < m.totalStudents)
+        urgBadges += '<span style="background:rgba(255,255,255,.25);border-radius:99px;padding:1px 6px;font-size:9px;margin-left:3px">T2</span>';
+      if (m.exOpen && m.exFilled > 0 && m.exFilled < m.totalStudents)
+        urgBadges += '<span style="background:rgba(255,255,255,.25);border-radius:99px;padding:1px 6px;font-size:9px;margin-left:3px">EXM</span>';
+      html += '<div class="course-card-warn">⚠ '+worstMissing+' Missing'+urgBadges+'</div>';
+    } else if (isNotStarted && !isBlocked) {
+      html += '<div class="course-card-warn amber">⚠ Not Started</div>';
+    } else if (isBlocked) {
+      html += '<div class="course-card-lock">🔒 Finish pending first</div>';
     }
 
     html += '<div class="course-card-top">';
@@ -2486,27 +2718,220 @@ function renderMarksEntry(opts) {
     html += '<div><div class="course-card-name">'+esc(subj.Name||'Unknown')+'</div>';
     html += '<div class="course-card-class">'+esc(cls.Name||'Unknown class')+'</div></div>';
     html += '</div>';
-    // Progress bar
-    html += '<div style="margin:8px 0 10px">';
-    html += '<div style="display:flex;justify-content:space-between;font-size:10.5px;font-weight:700;color:var(--muted);margin-bottom:4px">';
-    html += '<span>'+m.enteredCnt+' / '+m.totalStudents+' students entered</span>';
-    html += '<span style="color:'+(m.pctFill===100?'var(--green)':m.pctFill>0?'var(--blue)':'var(--faint)')+'">'+m.pctFill+'%</span>';
+
+    // ── Per-assessment progress bars ──
+    var tot = m.totalStudents;
+    html += '<div class="cc-assessment-bars">';
+
+    // Test 1
+    (function(){
+      var open = m.t1Open;
+      var filled = m.t1Filled;
+      var pct = (tot > 0 && filled > 0) ? Math.min(100, Math.round(filled/tot*100)) : 0;
+      var isDone = pct === 100 && filled > 0;
+      var isClosedWithData = !open && filled > 0;
+      var closedCls = (open || isClosedWithData) ? '' : ' closed-label';
+      var trackCls  = (open || isClosedWithData) ? '' : ' closed-track';
+      var fillCls, pctCls;
+      if (!open && !isClosedWithData) {
+        fillCls = ' closed-fill'; pctCls = '';
+      } else if (isDone) {
+        fillCls = ' t1-done'; pctCls = ' t1-pct done-pct';
+      } else {
+        fillCls = ' t1' + (filled > 0 ? ' active' : ''); pctCls = ' t1-pct' + (filled > 0 ? ' has' : '');
+      }
+      var checkMark = isDone ? '<span class="cc-abar-check show" style="color:#059669">✓</span>' : '<span class="cc-abar-check"></span>';
+      var lockIcon  = (isClosedWithData && !isDone) ? '<span style="font-size:9px;margin-left:2px;opacity:.6">🔒</span>' : '';
+      html += '<div class="cc-abar-row">';
+      html += '<span class="cc-abar-label'+closedCls+'">T1</span>';
+      html += '<div class="cc-abar-track'+trackCls+'">';
+      html += '<div class="cc-abar-fill'+fillCls+'" style="width:'+pct+'%"></div>';
+      html += '</div>';
+      if (!open && !isClosedWithData) {
+        html += '<span class="cc-abar-pct" style="color:#cbd5e1">—</span>';
+      } else {
+        html += '<span class="cc-abar-pct'+pctCls+'">'+pct+'%'+lockIcon+'</span>';
+      }
+      html += checkMark;
+      html += '</div>';
+    })();
+
+    // Test 2
+    (function(){
+      var open = m.t2Open;
+      var filled = open ? m.t2Filled : 0;
+      var pct = (open && tot > 0) ? Math.min(100, Math.round(filled/tot*100)) : 0;
+      var isDone = open && pct === 100;
+      var closedCls = open ? '' : ' closed-label';
+      var trackCls  = open ? '' : ' closed-track';
+      var fillCls   = open ? (isDone ? ' t2-done' : ' t2' + (filled>0?' active':'')) : ' closed-fill';
+      var pctCls    = isDone ? ' t2-pct done-pct' : (' t2-pct' + (filled>0?' has':''));
+      var checkMark = isDone ? '<span class="cc-abar-check show" style="color:#059669">✓</span>' : '<span class="cc-abar-check"></span>';
+      html += '<div class="cc-abar-row">';
+      html += '<span class="cc-abar-label'+closedCls+'">T2</span>';
+      html += '<div class="cc-abar-track'+trackCls+'">';
+      html += '<div class="cc-abar-fill'+fillCls+'" style="width:'+pct+'%"></div>';
+      html += '</div>';
+      html += open ? '<span class="cc-abar-pct'+pctCls+'">'+pct+'%</span>' : '<span class="cc-abar-pct" style="color:#cbd5e1">—</span>';
+      html += checkMark;
+      html += '</div>';
+    })();
+
+    // Exam
+    (function(){
+      var open = m.exOpen;
+      var filled = open ? m.exFilled : 0;
+      var pct = (open && tot > 0) ? Math.min(100, Math.round(filled/tot*100)) : 0;
+      var isDone = open && pct === 100;
+      var closedCls = open ? '' : ' closed-label';
+      var trackCls  = open ? '' : ' closed-track';
+      var fillCls   = open ? (isDone ? ' ex-done' : ' ex' + (filled>0?' active':'')) : ' closed-fill';
+      var pctCls    = isDone ? ' ex-pct done-pct' : (' ex-pct' + (filled>0?' has':''));
+      var checkMark = isDone ? '<span class="cc-abar-check show" style="color:#059669">✓</span>' : '<span class="cc-abar-check"></span>';
+      html += '<div class="cc-abar-row">';
+      html += '<span class="cc-abar-label'+closedCls+'">EXM</span>';
+      html += '<div class="cc-abar-track'+trackCls+'">';
+      html += '<div class="cc-abar-fill'+fillCls+'" style="width:'+pct+'%"></div>';
+      html += '</div>';
+      html += open ? '<span class="cc-abar-pct'+pctCls+'">'+pct+'%</span>' : '<span class="cc-abar-pct" style="color:#cbd5e1">—</span>';
+      html += checkMark;
+      html += '</div>';
+    })();
+
+    html += '</div>'; // end cc-assessment-bars
+
+    // Overall weighted pct + student count row
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:10.5px;font-weight:700;color:var(--muted);margin-bottom:8px">';
+    html += '<span>'+m.totalStudents+' students</span>';
+    html += '<span style="color:'+(m.pctFill===100?'var(--green)':m.pctFill>0?'var(--blue)':'var(--faint)')+'">'+m.pctFill+'% overall</span>';
     html += '</div>';
-    html += '<div style="height:5px;background:var(--line);border-radius:99px;overflow:hidden">';
-    html += '<div class="cc-prog-bar-fill" style="height:100%;width:'+m.pctFill+'%;background:'+barColor+';border-radius:99px;transition:width .4s"></div>';
-    html += '</div></div>';
+
     // Status chips
     html += '<div class="course-card-meta">';
     html += '<span class="course-chip-sm '+(m.t1Open?'open':'closed')+'">Test 1</span>';
     html += '<span class="course-chip-sm '+(m.t2Open?'open':'closed')+'">Test 2</span>';
     html += '<span class="course-chip-sm '+(m.exOpen?'open':'closed')+'">Exam</span>';
     if (sps.length) html += '<span class="course-chip-sm">'+sps.length+' components</span>';
-    html += '<span class="course-chip-sm">'+m.totalStudents+' students</span>';
     html += '</div></div>';
   });
 
   if (!html) html = '<div class="card"><div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">No subjects assigned to you yet.</div></div></div>';
   document.getElementById('coursePickerGrid').innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════
+   BLOCKED MODAL — OPEN FOCUS OR WARN
+══════════════════════════════════════════════════ */
+var _blockedTargetIdx = null;
+var _urgentCardIdx    = null;
+
+function openFocusOrWarn(assignIdx, e) {
+  if (e) e.stopPropagation();
+  // Re-compute which cards are urgent from live data
+  var assignments = _data ? (_data.assignments || []) : [];
+  var marks       = _data ? (_data.marks || [])       : [];
+  var subjects    = _data ? (_data.subjects || [])    : [];
+  var classes     = _data ? (_data.classes || [])     : [];
+  var activeTerm  = (_data && _data.terms || []).find(function(t){ return String(t.is_active||'').toLowerCase()==='true'; }) || {};
+  var termId      = String(activeTerm.term_id || '');
+
+  var urgentCards = [];
+  assignments.forEach(function(a, idx) {
+    var mrows = marks.filter(function(m){
+      return m.class_id===a.class_id && m.subject_id===a.subject_id && String(m.term_id)===termId;
+    });
+
+    // Build active student set — EXCLUDE students who left this term
+    var activeIds = {};
+    var tot = 0;
+    (_data.students||[]).forEach(function(s){
+      if (s.class_id !== a.class_id) return;
+      var ltStr = String(s.left_terms || '').trim();
+      if (ltStr && termId) {
+        var leftArr = ltStr.split(',').map(function(x){ return x.trim(); });
+        if (leftArr.indexOf(termId) !== -1) return;
+      }
+      activeIds[String(s.student_id)] = true;
+      tot++;
+    });
+    if (!tot) return;
+
+    var t1Open = mrows.some(function(m){ return String(m.test1_status||'').toUpperCase()==='OPEN'; });
+    var t2Open = mrows.some(function(m){ return String(m.test2_status||'').toUpperCase()==='OPEN'; });
+    var exOpen = mrows.some(function(m){ return String(m.exam_status ||'').toUpperCase()==='OPEN'; });
+
+    function filled(field, openFlag) {
+      if (!openFlag) return { open:false, cnt:0, tot:tot };
+      var cnt = 0;
+      var seen = {};
+      mrows.forEach(function(r){
+        var sid = String(r.student_id);
+        if (!activeIds[sid]) return;
+        if (!seen[sid] && r[field]!==null && r[field]!=='' && r[field]!==undefined) {
+          seen[sid]=true; cnt++;
+        }
+      });
+      return { open:true, cnt:cnt, tot:tot };
+    }
+    var t1 = filled('test1', t1Open);
+    var t2 = filled('test2', t2Open);
+    var ex = filled('exam',  exOpen);
+    var isUrgent = (t1.open && t1.cnt>0 && t1.cnt<tot)
+                || (t2.open && t2.cnt>0 && t2.cnt<tot)
+                || (ex.open && ex.cnt>0 && ex.cnt<tot);
+    if (isUrgent) {
+      var subj = subjects.find(function(s){ return s.subject_id===a.subject_id; }) || {};
+      var cls  = classes.find(function(c){ return c.class_id===a.class_id; }) || {};
+      urgentCards.push({
+        idx:idx,
+        name: (subj.Name||'Subject') + ' — ' + (cls.Name||'Class'),
+        t1:t1, t2:t2, ex:ex
+      });
+    }
+  });
+
+  // If this card itself is urgent → open directly, no warning
+  var thisIsUrgent = urgentCards.some(function(u){ return u.idx === assignIdx; });
+  if (!urgentCards.length || thisIsUrgent) {
+    openFocus(assignIdx);
+    return;
+  }
+
+  // This card is blocked — show warning modal
+  _blockedTargetIdx = assignIdx;
+  _urgentCardIdx    = urgentCards[0].idx;
+
+  // Build urgent list HTML
+  var listHtml = '';
+  urgentCards.forEach(function(u) {
+    var badges = '';
+    if (u.t1.open && u.t1.cnt>0 && u.t1.cnt<u.t1.tot)
+      badges += '<span class="bm-badge t1">T1: '+u.t1.cnt+'/'+u.t1.tot+'</span>';
+    if (u.t2.open && u.t2.cnt>0 && u.t2.cnt<u.t2.tot)
+      badges += '<span class="bm-badge t2">T2: '+u.t2.cnt+'/'+u.t2.tot+'</span>';
+    if (u.ex.open && u.ex.cnt>0 && u.ex.cnt<u.ex.tot)
+      badges += '<span class="bm-badge ex">Exam: '+u.ex.cnt+'/'+u.ex.tot+'</span>';
+    listHtml += '<div class="bm-urgent-item">'
+      +'<span class="bm-urgent-dot"></span>'
+      +'<span style="flex:1">'+esc(u.name)+'</span>'
+      +'<span class="bm-urgent-badges">'+badges+'</span>'
+      +'</div>';
+  });
+  document.getElementById('bmUrgentList').innerHTML = listHtml;
+  document.getElementById('blockedModal').classList.add('open');
+}
+
+function blockedModalGoFix() {
+  document.getElementById('blockedModal').classList.remove('open');
+  if (_urgentCardIdx !== null) openFocus(_urgentCardIdx);
+  _blockedTargetIdx = null;
+  _urgentCardIdx    = null;
+}
+
+function closeBlockedModal() {
+  document.getElementById('blockedModal').classList.remove('open');
+  _blockedTargetIdx = null;
+  _urgentCardIdx    = null;
 }
 
 /* ══════════════════════════════════
@@ -2610,6 +3035,10 @@ function _doCloseFocus() {
   _errTips = {};
 }
 
+function _showDiscardModal(cb) {
+  _discardTarget = cb;
+  document.getElementById('discardModal').classList.add('open');
+}
 function closeDiscardModal() {
   document.getElementById('discardModal').classList.remove('open');
   _discardTarget = null;
@@ -3398,34 +3827,35 @@ function _updateFocusProgressBar() {
   var icon  = document.getElementById('focusProgressIcon');
   if (!strip || !_focus || !_focus.students) return;
 
-  var students  = _focus.students;
-  var allTotal  = students.length;
+  var students = _focus.students;
+  var allTotal = students.length;
   if (!allTotal) { strip.style.display = 'none'; return; }
 
-  var isAll    = _focus._isAllComponents;
-  var spMeta   = _focus._spMeta;
-  var t1Stat   = _focus._t1Status;
-  var t2Stat   = _focus._t2Status;
-  var exStat   = _focus._exStatus;
+  // ── Determine the "active" open assessment for progress tracking ──
+  // If only one assessment is OPEN (e.g. T2 is open, T1 is closed), show
+  // progress for that specific assessment rather than "all open cols filled".
+  // This gives meaningful feedback: "4 / 24 students T2 filled" instead of "0%".
+  var isAll   = _focus._isAllComponents;
+  var spMeta  = _focus._spMeta;
 
-  // Build marks-by-student index for single-subpart mode
-  var marksByStudent = {};
-  if (!isAll && _focus._spMarks) {
-    _focus._spMarks.forEach(function(m){ marksByStudent[m.student_id] = m; });
-  }
-
-  // Determine whether ANY column is open for entry
-  var anyColOpen = false;
+  var openFlags = { t1: false, t2: false, exam: false };
   if (isAll && spMeta) {
-    spMeta.forEach(function(sm){
-      if (sm.t1Stat==='OPEN'||sm.t2Stat==='OPEN'||sm.exStat==='OPEN') anyColOpen = true;
+    spMeta.forEach(function(sm) {
+      if (sm.t1Stat === 'OPEN') openFlags.t1 = true;
+      if (sm.t2Stat === 'OPEN') openFlags.t2 = true;
+      if (sm.exStat === 'OPEN') openFlags.exam = true;
     });
   } else {
-    anyColOpen = (t1Stat==='OPEN'||t2Stat==='OPEN'||exStat==='OPEN');
+    if (_focus._t1Status === 'OPEN') openFlags.t1 = true;
+    if (_focus._t2Status === 'OPEN') openFlags.t2 = true;
+    if (_focus._exStatus === 'OPEN') openFlags.exam = true;
   }
 
+  var openCount = (openFlags.t1?1:0) + (openFlags.t2?1:0) + (openFlags.exam?1:0);
+  var singleOpen = openCount === 1; // exactly one assessment column is open
+
   // If ALL columns are locked (nothing is OPEN), show locked state — not 100%
-  if (!anyColOpen) {
+  if (openCount === 0) {
     strip.style.display = '';
     fill.style.width = '100%';
     fill.style.background = '#94a3b8';
@@ -3441,46 +3871,40 @@ function _updateFocusProgressBar() {
   // Restore fill colour in case it was previously set to locked grey
   fill.style.background = '';
 
-  // Count students: only "filled" when ALL OPEN columns have a value
+  // Recount from data model — always accurate regardless of visible columns
   var allFilled = 0;
-  students.forEach(function(st) {
-    var studentHasAny = false;
-    var studentDone   = true;
 
-    if (isAll && spMeta) {
-      spMeta.forEach(function(sm) {
-        var m   = sm.rows.find(function(r){ return String(r.student_id)===String(st.student_id); }) || null;
-        var mId = m && m.mark_id ? String(m.mark_id) : ('new|'+st.student_id+'|'+sm.sp.subpart_id);
-        var dirty = _focus.dirty[mId] || {};
-        var t1v = dirty.test1 !== undefined ? dirty.test1 : (m && m.test1 !== undefined && m.test1 !== null ? String(m.test1) : '');
-        var t2v = dirty.test2 !== undefined ? dirty.test2 : (m && m.test2 !== undefined && m.test2 !== null ? String(m.test2) : '');
-        var exv = dirty.exam  !== undefined ? dirty.exam  : (m && m.exam  !== undefined && m.exam  !== null ? String(m.exam)  : '');
-        // OPEN columns: required for "done"; must have value to contribute to "started"
-        if (sm.t1Stat==='OPEN') { if (t1v!=='') studentHasAny=true; else studentDone=false; }
-        if (sm.t2Stat==='OPEN') { if (t2v!=='') studentHasAny=true; else studentDone=false; }
-        if (sm.exStat==='OPEN') { if (exv!=='') studentHasAny=true; else studentDone=false; }
-        // CLOSED columns with values count as "started" but NOT required
-        if (sm.t1Stat!=='OPEN' && t1v!=='') studentHasAny=true;
-        if (sm.t2Stat!=='OPEN' && t2v!=='') studentHasAny=true;
-        if (sm.exStat!=='OPEN' && exv!=='') studentHasAny=true;
-      });
-    } else {
-      var m   = marksByStudent[st.student_id] || null;
-      var mId = m && m.mark_id ? String(m.mark_id) : ('new|'+st.student_id+'|'+(_focus._spId||''));
-      var dirty = _focus.dirty[mId] || {};
-      var t1v = dirty.test1 !== undefined ? dirty.test1 : (m && m.test1 !== undefined && m.test1 !== null ? String(m.test1) : '');
-      var t2v = dirty.test2 !== undefined ? dirty.test2 : (m && m.test2 !== undefined && m.test2 !== null ? String(m.test2) : '');
-      var exv = dirty.exam  !== undefined ? dirty.exam  : (m && m.exam  !== undefined && m.exam  !== null ? String(m.exam)  : '');
-      if (t1Stat==='OPEN') { if (t1v!=='') studentHasAny=true; else studentDone=false; }
-      if (t2Stat==='OPEN') { if (t2v!=='') studentHasAny=true; else studentDone=false; }
-      if (exStat==='OPEN') { if (exv!=='') studentHasAny=true; else studentDone=false; }
-      if (t1Stat!=='OPEN' && t1v!=='') studentHasAny=true;
-      if (t2Stat!=='OPEN' && t2v!=='') studentHasAny=true;
-      if (exStat!=='OPEN' && exv!=='') studentHasAny=true;
-    }
-    // Only count as filled when student has at least one value AND all OPEN cols are done
-    if (studentHasAny && studentDone) allFilled++;
-  });
+  if (singleOpen) {
+    // Count students who have the single open field filled (regardless of other columns)
+    var activeField = openFlags.t1 ? 'test1' : openFlags.t2 ? 'test2' : 'exam';
+    var activeStat  = openFlags.t1 ? 't1Stat' : openFlags.t2 ? 't2Stat' : 'exStat';
+    students.forEach(function(st) {
+      var hasFilled = false;
+      if (isAll && spMeta) {
+        spMeta.forEach(function(sm) {
+          if (sm[activeStat] !== 'OPEN') return;
+          var m   = sm.rows.find(function(r){ return String(r.student_id)===String(st.student_id); }) || null;
+          var mId = m && m.mark_id ? String(m.mark_id) : ('new|'+st.student_id+'|'+sm.sp.subpart_id);
+          var d   = _focus.dirty[mId] || {};
+          var val = d[activeField] !== undefined ? d[activeField] : (m && m[activeField] !== undefined ? String(m[activeField]) : '');
+          if (val !== '') hasFilled = true;
+        });
+      } else {
+        var spMarks2 = _focus._spMarks || [];
+        var mByS2    = {};
+        spMarks2.forEach(function(r){ mByS2[r.student_id] = r; });
+        var m2   = mByS2[st.student_id] || null;
+        var mId2 = m2 && m2.mark_id ? String(m2.mark_id) : ('new|'+st.student_id+'|'+(_focus._spId||''));
+        var d2   = _focus.dirty[mId2] || {};
+        var val2 = d2[activeField] !== undefined ? d2[activeField] : (m2 && m2[activeField] !== undefined ? String(m2[activeField]) : '');
+        if (val2 !== '') hasFilled = true;
+      }
+      if (hasFilled) allFilled++;
+    });
+  } else {
+    // Multiple open columns — use _allFilledCount (students with ALL open cols done)
+    allFilled = _focus._allFilledCount || 0;
+  }
 
   strip.style.display = '';
   var pct = Math.min(100, Math.round((allFilled / allTotal) * 100));
@@ -3500,6 +3924,9 @@ function _updateFocusProgressBar() {
     pctEl.classList.remove('complete');
     if (icon) icon.textContent = '📝';
   }
+
+  // Sync _allFilledCount so card meta stays accurate after typing
+  if (!singleOpen) _focus._allFilledCount = allFilled;
 
   // Pulse glow on active typing
   fill.classList.add('active', 'pulsing');
